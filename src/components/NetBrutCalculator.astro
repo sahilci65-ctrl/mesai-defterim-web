@@ -1,0 +1,194 @@
+---
+// Astro bileşeni — client-side hesaplama
+---
+
+<div class="net-brut-calculator">
+  <div class="input-group">
+    <label for="gross-income">Aylık Brüt Maaş (₺)</label>
+    <input
+      id="gross-income"
+      type="number"
+      placeholder="45000"
+      min="0"
+      step="100"
+      value="45000"
+    />
+  </div>
+
+  <div class="calculation-details" id="details">
+    <div class="detail-row">
+      <span class="label">Brüt:</span>
+      <span class="value" id="gross">₺ 45.000,00</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">SGK Kesintisi:</span>
+      <span class="value text-danger" id="sgk">-₺ 4.275,00</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Gelir Vergisi:</span>
+      <span class="value text-danger" id="tax">-₺ 6.105,00</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Damga Vergisi:</span>
+      <span class="value text-danger" id="stamp">-₺ 342,16</span>
+    </div>
+    <div class="detail-row total">
+      <span class="label">Net Ücretiniz:</span>
+      <span class="value text-success" id="net">₺ 34.277,84</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .net-brut-calculator {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .input-group label {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    font-size: var(--font-size-base);
+  }
+
+  .input-group input {
+    min-height: var(--touch-target);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: var(--font-size-base);
+  }
+
+  .input-group input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(0, 61, 122, 0.1);
+  }
+
+  .calculation-details {
+    background-color: var(--color-gray-50);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: var(--space-md);
+    font-size: var(--font-size-sm);
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .detail-row.total {
+    border-bottom: none;
+    padding-top: var(--space-md);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+  }
+
+  .detail-row .label {
+    color: var(--color-text-secondary);
+  }
+
+  .detail-row .value {
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .detail-row .value.text-danger {
+    color: var(--color-danger);
+  }
+
+  .detail-row .value.text-success {
+    color: var(--color-success);
+    font-size: var(--font-size-lg);
+  }
+</style>
+
+<script define:vars={{}}>
+  // Hesaplama fonksiyonlarını inline tanımla
+  const TAX_BRACKETS = [
+    { limit: 95000, rate: 0.15 },
+    { limit: 540000, rate: 0.2 },
+    { limit: 1800000, rate: 0.27 },
+    { limit: Infinity, rate: 0.35 },
+  ];
+
+  const SGK_RATE = 0.15;
+  const STAMP_TAX_RATE = 0.00759;
+  const MINIMUM_WAGE = 16500;
+
+  function calculateIncomeTax(grossIncome) {
+    const sgkDeduction = calculateSGKDeduction(grossIncome);
+    const taxableIncome = grossIncome - sgkDeduction;
+
+    if (taxableIncome <= 0) return 0;
+
+    let tax = 0;
+    let previousLimit = 0;
+
+    for (const bracket of TAX_BRACKETS) {
+      if (taxableIncome <= previousLimit) break;
+
+      const incomeInBracket = Math.min(taxableIncome, bracket.limit) - previousLimit;
+      tax += incomeInBracket * bracket.rate;
+      previousLimit = bracket.limit;
+    }
+
+    return Math.round(tax * 100) / 100;
+  }
+
+  function calculateSGKDeduction(grossIncome) {
+    if (grossIncome <= MINIMUM_WAGE) {
+      return 0;
+    }
+
+    const sgkBase = grossIncome - MINIMUM_WAGE;
+    return Math.round(sgkBase * SGK_RATE * 100) / 100;
+  }
+
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: 'TRY',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  }
+
+  function calculate() {
+    const grossInput = document.getElementById('gross-income');
+    const gross = parseFloat(grossInput.value) || 0;
+
+    if (gross < 0) {
+      document.getElementById('net').textContent = '₺ 0,00';
+      return;
+    }
+
+    const sgkDeduction = calculateSGKDeduction(gross);
+    const incomeTax = calculateIncomeTax(gross);
+    const stampTax = Math.round(gross * STAMP_TAX_RATE * 100) / 100;
+    const net = Math.max(gross - sgkDeduction - incomeTax - stampTax, 0);
+
+    document.getElementById('gross').textContent = formatCurrency(gross);
+    document.getElementById('sgk').textContent = `-${formatCurrency(sgkDeduction)}`;
+    document.getElementById('tax').textContent = `-${formatCurrency(incomeTax)}`;
+    document.getElementById('stamp').textContent = `-${formatCurrency(stampTax)}`;
+    document.getElementById('net').textContent = formatCurrency(net);
+  }
+
+  document.getElementById('gross-income').addEventListener('input', calculate);
+  document.getElementById('gross-income').addEventListener('change', calculate);
+
+  // İlk hesaplama
+  calculate();
+</script>

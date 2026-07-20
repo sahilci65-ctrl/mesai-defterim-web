@@ -1,0 +1,143 @@
+---
+// SSS bölümü — "Nasıl hesaplanır" + 4-6 soru
+// FAQPage schema.org ile işaretlenir (SEO)
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export interface Props {
+  title?: string;
+  description?: string;
+  items: FAQItem[];
+  schemaId?: string;
+}
+
+const {
+  title = "Sık Sorulan Sorular",
+  description,
+  items,
+  schemaId = "faq-schema",
+} = Astro.props;
+---
+
+<section class="faq">
+  <div class="faq-container">
+    {title && <h2 class="faq-title">{title}</h2>}
+    {description && <p class="faq-description">{description}</p>}
+
+    <div class="faq-list" role="region" aria-label="Sık sorulan sorular">
+      {
+        items.map((item, index) => (
+          <details class="faq-item" key={index}>
+            <summary class="faq-question">{item.question}</summary>
+            <div class="faq-answer">
+              <div set:html={item.answer} />
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- FAQPage schema.org işaretlemesi -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": items.map(item => ({
+    "@type": "Question",
+    "name": item.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": item.answer.replace(/<[^>]*>/g, ''), // HTML strip
+    }
+  }))
+})} />
+
+<style>
+  .faq {
+    padding: var(--space-3xl) var(--space-md);
+    background-color: var(--color-background);
+  }
+
+  .faq-container {
+    max-width: 1024px;
+    margin: 0 auto;
+  }
+
+  .faq-title {
+    font-size: var(--font-size-3xl);
+    color: var(--color-primary);
+    margin-bottom: var(--space-lg);
+  }
+
+  .faq-description {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-2xl);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .faq-item {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .faq-item[open] {
+    border-color: var(--color-primary);
+  }
+
+  .faq-question {
+    display: flex;
+    align-items: center;
+    min-height: var(--touch-target);
+    padding: var(--space-md) var(--space-lg);
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    font-size: var(--font-size-base);
+  }
+
+  .faq-question:hover {
+    background-color: var(--color-gray-100);
+  }
+
+  .faq-question::marker {
+    color: var(--color-primary);
+  }
+
+  .faq-answer {
+    padding: var(--space-lg);
+    background-color: var(--color-background);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-relaxed);
+    color: var(--color-text);
+  }
+
+  .faq-answer :global(p) {
+    margin-bottom: var(--space-md);
+  }
+
+  .faq-answer :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .faq-answer :global(strong) {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+  }
+
+  .faq-answer :global(em) {
+    font-style: italic;
+  }
+</style>

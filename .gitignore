@@ -1,0 +1,32 @@
+# Astro
+dist/
+.astro/
+
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Test
+coverage/
+.nyc_output/
+
+# Build
+.turbo/
+.vercel/

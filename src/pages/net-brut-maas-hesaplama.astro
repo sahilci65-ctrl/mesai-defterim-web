@@ -1,0 +1,289 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Calculator from '../components/Calculator.astro';
+import FAQ from '../components/FAQ.astro';
+import AppBox from '../components/AppBox.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+import RelatedTools from '../components/RelatedTools.astro';
+
+const faqItems = [
+  {
+    question: "Brut ve net maas farki nedir?",
+    answer: "Brut maas, kesintisiz toplam maasınızdır. Net maas, SGK (yuzde 15), gelir vergisi ve damga vergisi (yuzde 0.759) kesintisi yapildiktan sonra elde edeceginiz tutar.",
+  },
+  {
+    question: "Asgari ucret istisnasi nedir?",
+    answer: "Asgari ücrete kadar SGK kesintisi uygulanmaz. Ornekle: asgari ucret 16500 TL ise, 16500 TL'ye kadar SGK yok, fazlası uzerinden yuzde 15 kesintisi yapilir.",
+  },
+  {
+    question: "Vergi dilimleri nelerdir?",
+    answer: "2026 vergi dilimleri: 0-95.000 TL'de yuzde 15, 95.001-540.000 TL'de yuzde 20, 540.001-1.800.000 TL'de yuzde 27, 1.800.001+ TL'de yuzde 35.",
+  },
+  {
+    question: "Brut maaş artmak net'te az artış saglıyor mu?",
+    answer: "Evet. Brut arttiginda, hem SGK hem vergi yeni dilime ilerleyebilir. Ornekle: 95000 TL'den 96000 TL'ye ciktigi zaman, yeni 1000 TL yuzde 20 vergi odersiniz. Net artis brut artisten daha az olur.",
+  },
+  {
+    question: "Hesaplamalar kesin mi?",
+    answer: "Hayir, tahmindir. Gerçek hesaplama muhasebeci tarafından yapilir. Bazi isletmeler özel kesintiler veya artislar uygulayabilir.",
+  },
+];
+
+const relatedTools = [
+  {
+    title: "Fazla Mesai Ucreti",
+    url: "/fazla-mesai-hesaplama",
+    description: "Ayda kac saat fazla mesai yaptiysan ucretini hesapla.",
+  },
+  {
+    title: "Kidem Tazminati",
+    url: "/kidem-tazminati-hesaplama",
+    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+  },
+  {
+    title: "Ihbar Tazminati",
+    url: "/ihbar-tazminati-hesaplama",
+    description: "Issiz kalmaya karsilik odenecek tutari ogren.",
+  },
+  {
+    title: "Resmi Tatil Mesaisi",
+    url: "/resmi-tatil-mesaisi-hesaplama",
+    description: "Resmi tatilde calisma ucretini hesapla.",
+  },
+];
+---
+
+<BaseLayout
+  title="Net-Brut Maas Cevirici 2026 - Ucretsiz Araç"
+  description="Brut ve net maas arasinda aninda donusum yapin."
+>
+  <Calculator
+    title="Net-Brut Maas Cevirici"
+    description="Brut veya net maassinizi girin, otomatik olarak diger tutari gosterilir."
+    resultLabel="Net Maasınız:"
+    resultValue="TL 0,00"
+  >
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label for="gross-netbrut">Aylik Brut Maas (TL)</label><br />
+        <input
+          id="gross-netbrut"
+          type="number"
+          placeholder="45000"
+          min="0"
+          step="100"
+          value="45000"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div>
+        <label for="net-netbrut">VEYA Aylik Net Maas (TL)</label><br />
+        <input
+          id="net-netbrut"
+          type="number"
+          placeholder="0"
+          min="0"
+          step="100"
+          value="0"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Brut Maas:</span>
+          <strong id="display-gross">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>SGK Kesintisi (yuzde 15):</span>
+          <strong id="display-sgk">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>Gelir Vergisi:</span>
+          <strong id="display-tax">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>Damga Vergisi (yuzde 0.759):</span>
+          <strong id="display-stamp">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
+          <span style="font-weight: bold;">Net Maas:</span>
+          <strong id="display-net">TL 0,00</strong>
+        </div>
+      </div>
+    </div>
+  </Calculator>
+
+  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+
+  <RelatedTools tools={relatedTools} />
+
+  <AppBox campaignName="net-brut-maas-hesaplama" />
+
+  <Disclaimer />
+</BaseLayout>
+
+<script>
+  const TAX_BRACKETS = [
+    { limit: 95000, rate: 0.15 },
+    { limit: 540000, rate: 0.2 },
+    { limit: 1800000, rate: 0.27 },
+    { limit: Infinity, rate: 0.35 },
+  ];
+
+  const SGK_RATE = 0.15;
+  const STAMP_TAX_RATE = 0.00759;
+  const MINIMUM_WAGE = 16500;
+
+  function calculateIncomeTax(grossIncome) {
+    const sgkDeduction = calculateSGKDeduction(grossIncome);
+    const taxableIncome = grossIncome - sgkDeduction;
+
+    if (taxableIncome <= 0) return 0;
+
+    let tax = 0;
+    let previousLimit = 0;
+
+    for (const bracket of TAX_BRACKETS) {
+      if (taxableIncome <= previousLimit) break;
+
+      const incomeInBracket = Math.min(taxableIncome, bracket.limit) - previousLimit;
+      tax += incomeInBracket * bracket.rate;
+      previousLimit = bracket.limit;
+    }
+
+    return Math.round(tax * 100) / 100;
+  }
+
+  function calculateSGKDeduction(grossIncome) {
+    if (grossIncome <= MINIMUM_WAGE) {
+      return 0;
+    }
+
+    const sgkBase = grossIncome - MINIMUM_WAGE;
+    return Math.round(sgkBase * SGK_RATE * 100) / 100;
+  }
+
+  function calculateNetFromGross(gross) {
+    const sgkDeduction = calculateSGKDeduction(gross);
+    const incomeTax = calculateIncomeTax(gross);
+    const stampTax = Math.round(gross * STAMP_TAX_RATE * 100) / 100;
+    const net = Math.round((gross - sgkDeduction - incomeTax - stampTax) * 100) / 100;
+
+    return {
+      gross: Math.round(gross * 100) / 100,
+      sgkDeduction,
+      incomeTax,
+      stampTax,
+      net: Math.max(net, 0),
+    };
+  }
+
+  function calculateGrossFromNet(net) {
+    let low = net;
+    let high = net * 2;
+    let gross = net;
+
+    for (let i = 0; i < 50; i++) {
+      gross = (low + high) / 2;
+      const result = calculateNetFromGross(gross);
+
+      if (Math.abs(result.net - net) < 0.01) {
+        break;
+      }
+
+      if (result.net < net) {
+        low = gross;
+      } else {
+        high = gross;
+      }
+    }
+
+    return calculateNetFromGross(gross);
+  }
+
+  function fmt(n) {
+    return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  }
+
+  function displayResult(result) {
+    document.getElementById('display-gross').textContent = `TL ${fmt(result.gross)}`;
+    document.getElementById('display-sgk').textContent = `-TL ${fmt(result.sgkDeduction)}`;
+    document.getElementById('display-tax').textContent = `-TL ${fmt(result.incomeTax)}`;
+    document.getElementById('display-stamp').textContent = `-TL ${fmt(result.stampTax)}`;
+    document.getElementById('display-net').textContent = `TL ${fmt(result.net)}`;
+
+    // Calculator bileşenini güncelle
+    const resultValue = document.getElementById('result-value');
+    if (resultValue) resultValue.textContent = `TL ${fmt(result.net)}`;
+  }
+
+  function calculateFromGross() {
+    const gross = parseFloat(document.getElementById('gross-netbrut').value) || 0;
+
+    if (gross < 0) {
+      displayResult({ gross: 0, sgkDeduction: 0, incomeTax: 0, stampTax: 0, net: 0 });
+      return;
+    }
+
+    const result = calculateNetFromGross(gross);
+    displayResult(result);
+
+    // Net inputu güncelle (sync)
+    document.getElementById('net-netbrut').value = result.net;
+  }
+
+  function calculateFromNet() {
+    const net = parseFloat(document.getElementById('net-netbrut').value) || 0;
+
+    if (net < 0) {
+      displayResult({ gross: 0, sgkDeduction: 0, incomeTax: 0, stampTax: 0, net: 0 });
+      return;
+    }
+
+    if (net === 0) {
+      displayResult({ gross: 0, sgkDeduction: 0, incomeTax: 0, stampTax: 0, net: 0 });
+      document.getElementById('gross-netbrut').value = 0;
+      return;
+    }
+
+    const result = calculateGrossFromNet(net);
+    displayResult(result);
+
+    // Brüt inputu güncelle (sync)
+    document.getElementById('gross-netbrut').value = result.gross;
+  }
+
+  function init() {
+    const grossInput = document.getElementById('gross-netbrut');
+    const netInput = document.getElementById('net-netbrut');
+
+    if (!grossInput || !netInput) {
+      console.error('Net-brut: input elemanlari bulunamadi');
+      return;
+    }
+
+    grossInput.addEventListener('input', calculateFromGross);
+    netInput.addEventListener('input', calculateFromNet);
+
+    // Initial calculation
+    calculateFromGross();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+
+<style>
+  label {
+    display: block;
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+</style>

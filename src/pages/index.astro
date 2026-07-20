@@ -1,0 +1,191 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppBox from '../components/AppBox.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+
+const calculators = [
+  {
+    title: "Fazla Mesai Ucreti",
+    description: "Ayda kac saat fazla mesai yaptigin ve brut maasinin oranina gore ek ucretini hesapla.",
+    url: "/fazla-mesai-hesaplama",
+    icon: "⏰",
+  },
+  {
+    title: "Kidem Tazminati",
+    description: "Is yerinden ayrilis halinde alacagin kidem tazminatini kesin hesapla.",
+    url: "/kidem-tazminati-hesaplama",
+    icon: "📋",
+  },
+  {
+    title: "Ihbar Tazminati",
+    description: "Kidem suresine gore belirlenen ihbar tazminatini ani hesapla.",
+    url: "/ihbar-tazminati-hesaplama",
+    icon: "📢",
+  },
+  {
+    title: "Net-Brut Maas",
+    description: "Brut ve net maas arasinda iki yonlu donusum yap, tum kesintileri gor.",
+    url: "/net-brut-maas-hesaplama",
+    icon: "💰",
+  },
+  {
+    title: "Resmi Tatil Mesaisi",
+    description: "Resmi tatilde calisma saatinin karsiliginda alacagin ek ucreti hesapla.",
+    url: "/resmi-tatil-mesaisi-hesaplama",
+    icon: "🎉",
+  },
+];
+---
+
+<BaseLayout
+  title="Mesai Defterim - Ucret Hesaplama Araclari 2026"
+  description="Turk is yasalarinin 2026 parametrelerine gore brut-net, kidem, ihbar, fazla mesai ve resmi tatil ucretlerini aninda hesapla."
+>
+  <!-- Ust Bilgi -->
+  <section class="hero">
+    <div class="hero-container">
+      <h1>Ucret Hesaplama Araclari</h1>
+      <p>
+        Mesai Defterim web hesaplamacilari, Turk is yasalarinin en guncel
+        parametrelerine gore hazirlanmistir. Tum hesaplamalar anlık, ucretsiz
+        ve gizli (sunucuya veri gitmez).
+      </p>
+    </div>
+  </section>
+
+  <!-- Hesaplamaci Kartlari -->
+  <section class="calculators-section">
+    <div class="calculators-container">
+      <h2>Bos Araçlar (2026)</h2>
+      <div class="calculators-grid">
+        {
+          calculators.map((calc) => (
+            <a href={calc.url} class="calculator-card">
+              <div class="card-icon">{calc.icon}</div>
+              <h3>{calc.title}</h3>
+              <p>{calc.description}</p>
+              <span class="card-arrow">→</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Uygulama Tanitiml -->
+  <AppBox campaignName="index" />
+
+  <!-- Bağımsızlık Beyanı -->
+  <Disclaimer />
+</BaseLayout>
+
+<style>
+  .hero {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    padding: var(--space-3xl) var(--space-md);
+    text-align: center;
+  }
+
+  .hero-container {
+    max-width: 1024px;
+    margin: 0 auto;
+  }
+
+  .hero h1 {
+    font-size: var(--font-size-4xl);
+    color: white;
+    margin-bottom: var(--space-lg);
+  }
+
+  .hero p {
+    font-size: var(--font-size-lg);
+    color: rgba(255, 255, 255, 0.95);
+    line-height: var(--line-height-relaxed);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .calculators-section {
+    padding: var(--space-3xl) var(--space-md);
+    background-color: var(--color-background);
+  }
+
+  .calculators-container {
+    max-width: 1024px;
+    margin: 0 auto;
+  }
+
+  .calculators-container h2 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-primary);
+    margin-bottom: var(--space-2xl);
+    text-align: center;
+  }
+
+  .calculators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .calculator-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-xl);
+    background-color: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
+    min-height: 260px;
+  }
+
+  .calculator-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 8px 24px rgba(0, 61, 122, 0.12);
+    transform: translateY(-4px);
+  }
+
+  .card-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .calculator-card h3 {
+    font-size: var(--font-size-xl);
+    color: var(--color-primary);
+    margin-bottom: var(--space-md);
+    margin-top: 0;
+  }
+
+  .calculator-card p {
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+    flex-grow: 1;
+    margin-bottom: var(--space-md);
+    line-height: var(--line-height-normal);
+  }
+
+  .card-arrow {
+    color: var(--color-primary);
+    font-weight: bold;
+    font-size: var(--font-size-lg);
+  }
+
+  @media (max-width: 768px) {
+    .hero h1 {
+      font-size: var(--font-size-3xl);
+    }
+
+    .hero p {
+      font-size: var(--font-size-base);
+    }
+
+    .calculators-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

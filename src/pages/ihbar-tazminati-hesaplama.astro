@@ -1,0 +1,216 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Calculator from '../components/Calculator.astro';
+import FAQ from '../components/FAQ.astro';
+import AppBox from '../components/AppBox.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+import RelatedTools from '../components/RelatedTools.astro';
+
+const faqItems = [
+  {
+    question: "Ihbar tazminati nedir?",
+    answer: "Ihbar tazminati, issiz kalmasi karsiliginda verilen tazminattir. Kidem suresine gore 2, 4, 6 veya 8 haftalik ucret odenmelidir.",
+  },
+  {
+    question: "Ihbar suresi nasil belirlenir?",
+    answer: "Kidem suresine gore degisir: 6 aydan az = 2 hafta, 6 ay-1 yil = 2 hafta, 1-3 yil = 4 hafta, 3 yil+ = 8 hafta. Ornekle: 5 yil kidem = 8 hafta ihbar.",
+  },
+  {
+    question: "Haftalik ucret nasil hesaplanir?",
+    answer: "Haftalik ucret = aylik brut / 4.33. Ornekle: 45000 TL aylik = 45000 / 4.33 = 10392.49 TL haftalik.",
+  },
+  {
+    question: "Damga vergisi ihbar tazminatinda da var mi?",
+    answer: "Evet, ihbar tazminatinin brut tutarinden damga vergisi (yuzde 0.759) kesilir.",
+  },
+  {
+    question: "Ihbar suresi vermek zorunlu mu?",
+    answer: "Evet, issiz bolmek isteyen iscinin ihbar suresi tutmasi gerekir. Sureden once ayrilis halinde, issiz tutarini odemesi gerekebilir.",
+  },
+];
+
+const relatedTools = [
+  {
+    title: "Fazla Mesai Ucreti",
+    url: "/fazla-mesai-hesaplama",
+    description: "Ayda kac saat fazla mesai yaptiysan ucretini hesapla.",
+  },
+  {
+    title: "Kidem Tazminati",
+    url: "/kidem-tazminati-hesaplama",
+    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+  },
+  {
+    title: "Net-Brut Maas",
+    url: "/net-brut-maas-hesaplama",
+    description: "Brut ve net maas arasinda donusum yap.",
+  },
+  {
+    title: "Resmi Tatil Mesaisi",
+    url: "/resmi-tatil-mesaisi-hesaplama",
+    description: "Resmi tatilde calisma ucretini hesapla.",
+  },
+];
+---
+
+<BaseLayout
+  title="Ihbar Tazminati Hesaplama 2026 - Ucretsiz Araç"
+  description="Ihbar tazminati tutarini aninda hesaplayarak ne kadar alacaginizi ogrenin."
+>
+  <Calculator
+    title="Ihbar Tazminati Hesaplayici"
+    description="Aylik brut maasınız ve kidem yilini girin, tahmini ihbar tazminati tutarini ogrenin."
+    resultLabel="Tahmini Ihbar Tazminati (Net):"
+    resultValue="TL 0,00"
+  >
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label for="gross-notice">Aylik Brut Maas (TL)</label><br />
+        <input
+          id="gross-notice"
+          type="number"
+          placeholder="45000"
+          min="0"
+          step="100"
+          value="45000"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div>
+        <label for="years-notice">Kidem Yili</label><br />
+        <input
+          id="years-notice"
+          type="number"
+          placeholder="5"
+          min="0"
+          max="50"
+          step="0.5"
+          value="5"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Ihbar Suresi:</span>
+          <strong id="notice-weeks">0</strong> <span style="margin-left: 0.25rem;">hafta</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Haftalik Ucret:</span>
+          <strong id="weekly-rate">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Brut Tazminat:</span>
+          <strong id="gross-notice-amount">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>Damga Vergisi:</span>
+          <strong id="stamp-notice">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
+          <span style="font-weight: bold;">Net Tazminat:</span>
+          <strong id="net-notice">TL 0,00</strong>
+        </div>
+      </div>
+    </div>
+  </Calculator>
+
+  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+
+  <RelatedTools tools={relatedTools} />
+
+  <AppBox campaignName="ihbar-tazminati-hesaplama" />
+
+  <Disclaimer />
+</BaseLayout>
+
+<script>
+  const STAMP_TAX_RATE = 0.00759;
+  const WEEKS_PER_MONTH = 4.33;
+
+  function getNoticeWeeks(years) {
+    if (years < 0.5) return 2;       // 6 aydan az
+    if (years < 1) return 2;         // 6 ay - 1 yil
+    if (years < 3) return 4;         // 1-3 yil
+    return 8;                         // 3 yil+
+  }
+
+  function calculateNotice() {
+    const gross = parseFloat(document.getElementById('gross-notice').value) || 0;
+    const years = parseFloat(document.getElementById('years-notice').value) || 0;
+
+    if (gross <= 0) {
+      resetDisplay();
+      return;
+    }
+
+    // Ihbar suresi
+    const noticeWeeks = getNoticeWeeks(years);
+
+    // Haftalik ucret = aylik / 4.33
+    const weeklyRate = gross / WEEKS_PER_MONTH;
+
+    // Brut tazminat = haftalik × hafta
+    const grossAmount = weeklyRate * noticeWeeks;
+
+    // Damga vergisi
+    const stampTax = grossAmount * STAMP_TAX_RATE;
+
+    // Net
+    const netAmount = Math.max(0, grossAmount - stampTax);
+
+    // Format
+    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+    document.getElementById('notice-weeks').textContent = noticeWeeks;
+    document.getElementById('weekly-rate').textContent = `TL ${fmt(weeklyRate)}`;
+    document.getElementById('gross-notice-amount').textContent = `TL ${fmt(grossAmount)}`;
+    document.getElementById('stamp-notice').textContent = `-TL ${fmt(stampTax)}`;
+    document.getElementById('net-notice').textContent = `TL ${fmt(netAmount)}`;
+
+    // Calculator bileşenini güncelle
+    const resultValue = document.getElementById('result-value');
+    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
+  }
+
+  function resetDisplay() {
+    document.getElementById('notice-weeks').textContent = '0';
+    document.getElementById('weekly-rate').textContent = 'TL 0,00';
+    document.getElementById('gross-notice-amount').textContent = 'TL 0,00';
+    document.getElementById('stamp-notice').textContent = '-TL 0,00';
+    document.getElementById('net-notice').textContent = 'TL 0,00';
+  }
+
+  function init() {
+    const grossInput = document.getElementById('gross-notice');
+    const yearsInput = document.getElementById('years-notice');
+
+    if (!grossInput || !yearsInput) {
+      console.error('Ihbar tazminati: input elemanlari bulunamadi');
+      return;
+    }
+
+    grossInput.addEventListener('input', calculateNotice);
+    yearsInput.addEventListener('input', calculateNotice);
+
+    // Initial calculation
+    calculateNotice();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+
+<style>
+  label {
+    display: block;
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+</style>

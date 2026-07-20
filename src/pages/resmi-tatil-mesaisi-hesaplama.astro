@@ -1,0 +1,202 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Calculator from '../components/Calculator.astro';
+import FAQ from '../components/FAQ.astro';
+import AppBox from '../components/AppBox.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+import RelatedTools from '../components/RelatedTools.astro';
+
+const faqItems = [
+  {
+    question: "Resmi tatilde calisma ucreti nedir?",
+    answer: "Resmi tatilde calismanin karsiligi, gunluk ucretin yuzde 100'u adir. Yani ek 1 gun ucret odenmelidir. Ornekle: 45000 TL aylik, 3 gun resmi tatilde calista = (45000/30) × 3 = 4500 TL brut ek ucret.",
+  },
+  {
+    question: "Resmi tatil gunleri hangileridir?",
+    answer: "Resmi tatil gunleri: Yilbasi (1 Ocak), Ulusal Egemenlik ve Cocuk Bayrami (23 Nisan), Emek ve Isci Bayrami (1 Mayis), Genclik ve Spor Bayrami (19 Mayis), Zafer Bayrami (30 Agustos), Cumhuriyet Bayrami (29 Ekim), Ramazan Bayrami, Kurban Bayrami.",
+  },
+  {
+    question: "Hafta sonu ve tatil kumulu ise?",
+    answer: "Hafta sonu ve resmi tatil kumulu ise, Is Kanunu'na gore ek odenekler yapilabilir. Detay icin muhasebe uzmanina danismaniz onemlidir.",
+  },
+  {
+    question: "Resmi tatilde calisanlar izin kullanabiliyor mu?",
+    answer: "Resmi tatilde calisanlar, daha sonra kose gun izni alabilirler. Detaylar is sozlesmesi ve Is Kanunu kurallarina baglıdır.",
+  },
+  {
+    question: "Damga vergisi resmi tatil ucretinde de var mi?",
+    answer: "Evet, brut tutar uzerinden damga vergisi (yuzde 0.759) kesilir.",
+  },
+];
+
+const relatedTools = [
+  {
+    title: "Fazla Mesai Ucreti",
+    url: "/fazla-mesai-hesaplama",
+    description: "Ayda kac saat fazla mesai yaptiysan ucretini hesapla.",
+  },
+  {
+    title: "Kidem Tazminati",
+    url: "/kidem-tazminati-hesaplama",
+    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+  },
+  {
+    title: "Ihbar Tazminati",
+    url: "/ihbar-tazminati-hesaplama",
+    description: "Issiz kalmaya karsilik odenecek tutari ogren.",
+  },
+  {
+    title: "Net-Brut Maas",
+    url: "/net-brut-maas-hesaplama",
+    description: "Brut ve net maas arasinda donusum yap.",
+  },
+];
+---
+
+<BaseLayout
+  title="Resmi Tatil Mesaisi Hesaplama 2026 - Ucretsiz Araç"
+  description="Resmi tatil calisma ucretini aninda hesaplayarak ne kadar alacaginizi ogrenin."
+>
+  <Calculator
+    title="Resmi Tatil Mesaisi Hesaplayici"
+    description="Aylik brut maasınız ve calisilan resmi tatil gunu sayisini girin, ek ucretinizi ogrenin."
+    resultLabel="Tahmini Resmi Tatil Mesaisi (Net):"
+    resultValue="TL 0,00"
+  >
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label for="gross-holiday">Aylik Brut Maas (TL)</label><br />
+        <input
+          id="gross-holiday"
+          type="number"
+          placeholder="45000"
+          min="0"
+          step="100"
+          value="45000"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div>
+        <label for="days-holiday">Calisilan Resmi Tatil Gunu Sayisi</label><br />
+        <input
+          id="days-holiday"
+          type="number"
+          placeholder="3"
+          min="0"
+          step="0.5"
+          value="1"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Gunluk Ucret:</span>
+          <strong id="daily-rate-holiday">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Brut Ek Ucret:</span>
+          <strong id="gross-holiday-amount">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>Damga Vergisi:</span>
+          <strong id="stamp-holiday">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
+          <span style="font-weight: bold;">Net Ek Ucret:</span>
+          <strong id="net-holiday">TL 0,00</strong>
+        </div>
+      </div>
+    </div>
+  </Calculator>
+
+  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+
+  <RelatedTools tools={relatedTools} />
+
+  <AppBox campaignName="resmi-tatil-mesaisi-hesaplama" />
+
+  <Disclaimer />
+</BaseLayout>
+
+<script>
+  const STAMP_TAX_RATE = 0.00759;
+  const DAYS_PER_MONTH = 30;
+
+  function calculateHoliday() {
+    const gross = parseFloat(document.getElementById('gross-holiday').value) || 0;
+    const days = parseFloat(document.getElementById('days-holiday').value) || 0;
+
+    if (gross <= 0 || days <= 0) {
+      resetDisplay();
+      return;
+    }
+
+    // Gunluk ucret = aylik / 30
+    const dailyRate = gross / DAYS_PER_MONTH;
+
+    // Brut ek ucret = gunluk × gun
+    const grossAmount = dailyRate * days;
+
+    // Damga vergisi
+    const stampTax = grossAmount * STAMP_TAX_RATE;
+
+    // Net
+    const netAmount = Math.max(0, grossAmount - stampTax);
+
+    // Format
+    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+    document.getElementById('daily-rate-holiday').textContent = `TL ${fmt(dailyRate)}`;
+    document.getElementById('gross-holiday-amount').textContent = `TL ${fmt(grossAmount)}`;
+    document.getElementById('stamp-holiday').textContent = `-TL ${fmt(stampTax)}`;
+    document.getElementById('net-holiday').textContent = `TL ${fmt(netAmount)}`;
+
+    // Calculator bileşenini güncelle
+    const resultValue = document.getElementById('result-value');
+    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
+  }
+
+  function resetDisplay() {
+    document.getElementById('daily-rate-holiday').textContent = 'TL 0,00';
+    document.getElementById('gross-holiday-amount').textContent = 'TL 0,00';
+    document.getElementById('stamp-holiday').textContent = '-TL 0,00';
+    document.getElementById('net-holiday').textContent = 'TL 0,00';
+
+    const resultValue = document.getElementById('result-value');
+    if (resultValue) resultValue.textContent = 'TL 0,00';
+  }
+
+  function init() {
+    const grossInput = document.getElementById('gross-holiday');
+    const daysInput = document.getElementById('days-holiday');
+
+    if (!grossInput || !daysInput) {
+      console.error('Resmi tatil: input elemanlari bulunamadi');
+      return;
+    }
+
+    grossInput.addEventListener('input', calculateHoliday);
+    daysInput.addEventListener('input', calculateHoliday);
+
+    // Initial calculation
+    calculateHoliday();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+
+<style>
+  label {
+    display: block;
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+</style>

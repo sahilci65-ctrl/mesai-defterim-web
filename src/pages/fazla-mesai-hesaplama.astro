@@ -1,0 +1,173 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Calculator from '../components/Calculator.astro';
+import FAQ from '../components/FAQ.astro';
+import AppBox from '../components/AppBox.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+import RelatedTools from '../components/RelatedTools.astro';
+
+const faqItems = [
+  {
+    question: "Fazla mesai nasil hesaplanir?",
+    answer: "Saatlik ucret = aylik brut / 225. Fazla mesai ucreti = saatlik ucret × saat × 1.5 (Is Kanunu m.41). Ornekle: 45000 TL aylik, 10 saat fazla mesai = (45000/225) × 10 × 1.5 = 3000 TL brut.",
+  },
+  {
+    question: "Is Kanunu m.41 nedir?",
+    answer: "Is Kanunu 41. madde, fazla mesai ucretlerinin en az yuzde 50 artisliyla odenecegini belirtir. Yani normal saatlik ucretin 1.5 kati odenmelidir.",
+  },
+  {
+    question: "225 saat nereden geliyor?",
+    answer: "Aylik calisma saati 30 gun × 7.5 saat = 225 saattir. Bu standart hesaplamada kullanilir.",
+  },
+  {
+    question: "Gece calismasi artisi var mi?",
+    answer: "Bu hesaplamaci standart fazla mesai ucretini gosterir. Gece calismasi, pazar, bayram gibi ozel durumlarin artisi icin muhasebe uzmanina danismaniz onemlidir.",
+  },
+];
+
+const relatedTools = [
+  {
+    title: "Kidem Tazminati",
+    url: "/kidem-tazminati-hesaplama",
+    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+  },
+  {
+    title: "Ihbar Tazminati",
+    url: "/ihbar-tazminati-hesaplama",
+    description: "Issiz kalmaya karsilik odenecek tutari ogren.",
+  },
+  {
+    title: "Net-Brut Maas",
+    url: "/net-brut-maas-hesaplama",
+    description: "Brut ve net maas arasinda donusum yap.",
+  },
+  {
+    title: "Resmi Tatil Mesaisi",
+    url: "/resmi-tatil-mesaisi-hesaplama",
+    description: "Resmi tatilde calisma ucretini hesapla.",
+  },
+];
+---
+
+<BaseLayout
+  title="Fazla Mesai Hesaplama 2026 - Ucuz Arac"
+  description="Fazla mesai ucretini aninda hesaplayarak ne kadar alacaginizi ogrenin."
+>
+  <Calculator
+    title="Fazla Mesai Ucreti Hesaplayici"
+    description="Aylik brut maasınızı ve fazla mesai saatini girin, net ucretinizi ogrening."
+    resultLabel="Tahmini Fazla Mesai Net Ucreti:"
+    resultValue="TL 0,00"
+  >
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label for="gross-overtime">Aylik Brut Maas (TL)</label><br />
+        <input
+          id="gross-overtime"
+          type="number"
+          placeholder="45000"
+          min="0"
+          step="100"
+          value="45000"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+      <div>
+        <label for="hours-overtime">Fazla Mesai Saati</label><br />
+        <input
+          id="hours-overtime"
+          type="number"
+          placeholder="10"
+          min="0"
+          step="0.5"
+          value="10"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Saatlik Ucret:</span>
+          <strong id="hourly-rate">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Brut Ucret:</span>
+          <strong id="gross-amount">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>Damga Vergisi:</span>
+          <strong id="stamp-amount">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
+          <span style="font-weight: bold;">Net Ucret:</span>
+          <strong id="net-amount">TL 0,00</strong>
+        </div>
+      </div>
+    </div>
+  </Calculator>
+
+  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+
+  <RelatedTools tools={relatedTools} />
+
+  <AppBox campaignName="fazla-mesai-hesaplama" />
+
+  <Disclaimer />
+</BaseLayout>
+
+<script>
+  function calculateOvertime() {
+    const gross = parseFloat(document.getElementById('gross-overtime').value) || 0;
+    const hours = parseFloat(document.getElementById('hours-overtime').value) || 0;
+
+    if (gross <= 0 || hours <= 0) {
+      document.getElementById('hourly-rate').textContent = 'TL 0,00';
+      document.getElementById('gross-amount').textContent = 'TL 0,00';
+      document.getElementById('stamp-amount').textContent = '-TL 0,00';
+      document.getElementById('net-amount').textContent = 'TL 0,00';
+      const resultValue = document.getElementById('result-value');
+      if (resultValue) resultValue.textContent = 'TL 0,00';
+      return;
+    }
+
+    // Saatlik ucret = aylik / 225
+    const hourlyRate = gross / 225;
+
+    // Brut fazla mesai = saatlik × saat × 1.5
+    const grossAmount = hourlyRate * hours * 1.5;
+
+    // Damga vergisi = brut × %0.759
+    const stampTax = grossAmount * 0.00759;
+
+    // Net = brut - damga
+    const netAmount = Math.max(0, grossAmount - stampTax);
+
+    // Format
+    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+    document.getElementById('hourly-rate').textContent = `TL ${fmt(hourlyRate)}`;
+    document.getElementById('gross-amount').textContent = `TL ${fmt(grossAmount)}`;
+    document.getElementById('stamp-amount').textContent = `-TL ${fmt(stampTax)}`;
+    document.getElementById('net-amount').textContent = `TL ${fmt(netAmount)}`;
+
+    // Calculator bileşenini güncelle
+    const resultValue = document.getElementById('result-value');
+    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
+  }
+
+  document.getElementById('gross-overtime').addEventListener('input', calculateOvertime);
+  document.getElementById('hours-overtime').addEventListener('input', calculateOvertime);
+
+  // Initial calculation
+  calculateOvertime();
+</script>
+
+<style>
+  label {
+    display: block;
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+</style>

@@ -1,0 +1,89 @@
+---
+// Uygulama kutusu — her sayfada aynı
+// Google Play rozeti + UTM parametreli link
+export interface Props {
+  campaignName: string;
+}
+
+const { campaignName } = Astro.props;
+
+// Google Play Store linki — UTM parametreli
+const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mesaidefterim.app&utm_source=web&utm_campaign=${encodeURIComponent(campaignName)}`;
+---
+
+<section class="app-box">
+  <div class="app-box-container">
+    <div class="app-box-content">
+      <h2 class="app-box-title">Mesai Defterim Uygulaması</h2>
+      <p class="app-box-description">
+        Bu hesabı her ay otomatik yapan, bordronla karşılaştıran uygulama
+      </p>
+
+      <a href={playStoreUrl} target="_blank" rel="noopener noreferrer" class="play-store-link">
+        <img
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 135 40'%3E%3Crect width='135' height='40' fill='%25003D7A' rx='4'/%3E%3Ctext x='50' y='25' fill='white' font-family='Arial' font-size='12'%3EGoogle Play'da%3C/text%3E%3C/svg%3E"
+          alt="Google Play'de İndir"
+          class="play-store-badge"
+        />
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .app-box {
+    padding: var(--space-2xl) var(--space-md);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+  }
+
+  .app-box-container {
+    max-width: 1024px;
+    margin: 0 auto;
+  }
+
+  .app-box-content {
+    text-align: center;
+  }
+
+  .app-box-title {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-md);
+    color: white;
+  }
+
+  .app-box-description {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-lg);
+    color: rgba(255, 255, 255, 0.9);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .play-store-link {
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+
+  .play-store-link:hover {
+    transform: scale(1.05);
+  }
+
+  .play-store-link:active {
+    transform: scale(0.95);
+  }
+
+  .play-store-badge {
+    width: 135px;
+    height: 40px;
+  }
+
+  @media (min-width: 768px) {
+    .app-box {
+      padding: var(--space-3xl) var(--space-md);
+    }
+
+    .app-box-title {
+      font-size: var(--font-size-3xl);
+    }
+  }
+</style>

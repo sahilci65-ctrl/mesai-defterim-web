@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /.astro/
+Disallow: /_astro/
+
+Sitemap: http://localhost:4325/sitemap.xml

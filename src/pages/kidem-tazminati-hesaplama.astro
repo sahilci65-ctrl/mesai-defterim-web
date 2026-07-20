@@ -1,0 +1,250 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Calculator from '../components/Calculator.astro';
+import FAQ from '../components/FAQ.astro';
+import AppBox from '../components/AppBox.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+import RelatedTools from '../components/RelatedTools.astro';
+
+const faqItems = [
+  {
+    question: "Kidem tazminati nasil hesaplanir?",
+    answer: "Her tam yil icin 30 gunluk giydirilmis brut ucret odenmelidir. Kidem tazminati tavani uygulanir (tavanli tutar). Ornekle: 45000 TL aylik, 10 yil kidem = (45000/30) × 30 × 10 = 450000 TL (tavana kadar).",
+  },
+  {
+    question: "Kidem tazminati tavani nedir?",
+    answer: "2026'da kidem tazminati tavanı gunluk 343.33 TL (yaklasik 10300 TL aylik) seklindedir. Hesaplanan tutar tavani astigi takdirde tavanli tutar odenmelidir.",
+  },
+  {
+    question: "Artik ay ve gunler nasil hesaplanir?",
+    answer: "Tam olmayan aylar ve gunler oransal olarak hesaplanir. Ornekle: 10 yil 6 ay 15 gun = 30 + 15 + 15 = 60 gun. Gunluk ucret × 60 gun.",
+  },
+  {
+    question: "Damga vergisi nasil uygulanir?",
+    answer: "Kidem tazminati brut tutarinden damga vergisi (yuzde 0.759) kesilir. Net tutar = brut - damga vergisi.",
+  },
+  {
+    question: "Veri giriş sonrası ne yapmali?",
+    answer: "Hesaplanan tutar tahmini olup, kesin hesap icin muhasebe uzmanina danismaniz onemlidir. Vergi ve sosyal sigorta turizleri degisiklik gosterebilir.",
+  },
+];
+
+const relatedTools = [
+  {
+    title: "Fazla Mesai Ucreti",
+    url: "/fazla-mesai-hesaplama",
+    description: "Ayda kac saat fazla mesai yaptiysan ucretini hesapla.",
+  },
+  {
+    title: "Ihbar Tazminati",
+    url: "/ihbar-tazminati-hesaplama",
+    description: "Issiz kalmaya karsilik odenecek tutari ogren.",
+  },
+  {
+    title: "Net-Brut Maas",
+    url: "/net-brut-maas-hesaplama",
+    description: "Brut ve net maas arasinda donusum yap.",
+  },
+  {
+    title: "Resmi Tatil Mesaisi",
+    url: "/resmi-tatil-mesaisi-hesaplama",
+    description: "Resmi tatilde calisma ucretini hesapla.",
+  },
+];
+---
+
+<BaseLayout
+  title="Kidem Tazminati Hesaplama 2026 - Ucretsiz Araç"
+  description="Kidem tazminati tutarini aninda hesaplayarak ne kadar alacaginizi ogrenin."
+>
+  <Calculator
+    title="Kidem Tazminati Hesaplayici"
+    description="Aylik brut maasınız ve kidem yilini girin, tahmini kidem tazminati tutarini ogrenin."
+    resultLabel="Tahmini Kidem Tazminati (Net):"
+    resultValue="TL 0,00"
+  >
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label for="gross-severance">Aylik Brut Maas (TL)</label><br />
+        <input
+          id="gross-severance"
+          type="number"
+          placeholder="45000"
+          min="0"
+          step="100"
+          value="45000"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <div style="flex: 1;">
+          <label for="years-severance">Kidem Yili</label><br />
+          <input
+            id="years-severance"
+            type="number"
+            placeholder="10"
+            min="0"
+            max="50"
+            step="1"
+            value="10"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+          />
+        </div>
+        <div style="flex: 1;">
+          <label for="months-severance">Ay (0-11)</label><br />
+          <input
+            id="months-severance"
+            type="number"
+            placeholder="0"
+            min="0"
+            max="11"
+            step="1"
+            value="0"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+          />
+        </div>
+        <div style="flex: 1;">
+          <label for="days-severance">Gun (0-30)</label><br />
+          <input
+            id="days-severance"
+            type="number"
+            placeholder="0"
+            min="0"
+            max="30"
+            step="1"
+            value="0"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+          />
+        </div>
+      </div>
+
+      <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Toplam Gun:</span>
+          <strong id="total-days">0</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Gunluk Brut Ucret:</span>
+          <strong id="daily-rate">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span>Brut Tazminat:</span>
+          <strong id="gross-severance-amount">TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>Damga Vergisi:</span>
+          <strong id="stamp-severance">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
+          <span style="font-weight: bold;">Net Tazminat:</span>
+          <strong id="net-severance">TL 0,00</strong>
+        </div>
+      </div>
+    </div>
+  </Calculator>
+
+  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+
+  <RelatedTools tools={relatedTools} />
+
+  <AppBox campaignName="kidem-tazminati-hesaplama" />
+
+  <Disclaimer />
+</BaseLayout>
+
+<script>
+  const SEVERANCE_CAP_DAILY = 343.33;
+  const SEVERANCE_DAYS_PER_YEAR = 30;
+  const STAMP_TAX_RATE = 0.00759;
+
+  function calculateSeverance() {
+    const gross = parseFloat(document.getElementById('gross-severance').value) || 0;
+    const years = parseFloat(document.getElementById('years-severance').value) || 0;
+    const months = parseFloat(document.getElementById('months-severance').value) || 0;
+    const days = parseFloat(document.getElementById('days-severance').value) || 0;
+
+    if (gross <= 0) {
+      resetDisplay();
+      return;
+    }
+
+    // Toplam gun
+    const totalDays = years * SEVERANCE_DAYS_PER_YEAR +
+                      (months / 12) * SEVERANCE_DAYS_PER_YEAR +
+                      days;
+
+    // Gunluk brut = aylik / 30
+    const dailyRate = gross / 30;
+
+    // Brut tazminat (tavansa kadar)
+    let grossAmount = dailyRate * totalDays;
+    const cappedAmount = SEVERANCE_CAP_DAILY * totalDays;
+    if (grossAmount > cappedAmount) {
+      grossAmount = cappedAmount;
+    }
+
+    // Damga vergisi
+    const stampTax = grossAmount * STAMP_TAX_RATE;
+
+    // Net
+    const netAmount = Math.max(0, grossAmount - stampTax);
+
+    // Format
+    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+    document.getElementById('total-days').textContent = totalDays.toFixed(0);
+    document.getElementById('daily-rate').textContent = `TL ${fmt(dailyRate)}`;
+    document.getElementById('gross-severance-amount').textContent = `TL ${fmt(grossAmount)}`;
+    document.getElementById('stamp-severance').textContent = `-TL ${fmt(stampTax)}`;
+    document.getElementById('net-severance').textContent = `TL ${fmt(netAmount)}`;
+
+    // Calculator bileşenini güncelle
+    const resultValue = document.getElementById('result-value');
+    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
+  }
+
+  function resetDisplay() {
+    document.getElementById('total-days').textContent = '0';
+    document.getElementById('daily-rate').textContent = 'TL 0,00';
+    document.getElementById('gross-severance-amount').textContent = 'TL 0,00';
+    document.getElementById('stamp-severance').textContent = '-TL 0,00';
+    document.getElementById('net-severance').textContent = 'TL 0,00';
+  }
+
+  function init() {
+    const grossInput = document.getElementById('gross-severance');
+    const yearsInput = document.getElementById('years-severance');
+    const monthsInput = document.getElementById('months-severance');
+    const daysInput = document.getElementById('days-severance');
+
+    if (!grossInput || !yearsInput || !monthsInput || !daysInput) {
+      console.error('Kidem tazminati: input elemanlari bulunamadi');
+      return;
+    }
+
+    grossInput.addEventListener('input', calculateSeverance);
+    yearsInput.addEventListener('input', calculateSeverance);
+    monthsInput.addEventListener('input', calculateSeverance);
+    daysInput.addEventListener('input', calculateSeverance);
+
+    // Initial calculation
+    calculateSeverance();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+
+<style>
+  label {
+    display: block;
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+</style>
