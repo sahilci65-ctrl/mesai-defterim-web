@@ -1,43 +1,43 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Push ile trigger et
   push:
     branches: [ main ]
-  # Manuel çalıştırmaya izin ver
   workflow_dispatch:
 
-# GITHUB_TOKEN izinleri
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Aynı anda bir deployment çalışsın
 concurrency:
   group: "pages"
   cancel-in-progress: true
-
-env:
-  BUILD_PATH: "."
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout your repository using git
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Install, build, and upload your site
-        uses: withastro/action@v2
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with Astro
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ env.BUILD_PATH }}
+          path: './dist'
 
   deploy:
     name: Deploy
