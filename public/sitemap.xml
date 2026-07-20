@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://localhost:4325/</loc>
+    <loc>https://mesaidefterim.com/</loc>
     <lastmod>2026-07-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>http://localhost:4325/fazla-mesai-hesaplama</loc>
+    <loc>https://mesaidefterim.com/fazla-mesai-hesaplama</loc>
     <lastmod>2026-07-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>http://localhost:4325/kidem-tazminati-hesaplama</loc>
+    <loc>https://mesaidefterim.com/kidem-tazminati-hesaplama</loc>
     <lastmod>2026-07-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>http://localhost:4325/ihbar-tazminati-hesaplama</loc>
+    <loc>https://mesaidefterim.com/ihbar-tazminati-hesaplama</loc>
     <lastmod>2026-07-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>http://localhost:4325/net-brut-maas-hesaplama</loc>
+    <loc>https://mesaidefterim.com/net-brut-maas-hesaplama</loc>
     <lastmod>2026-07-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>http://localhost:4325/resmi-tatil-mesaisi-hesaplama</loc>
+    <loc>https://mesaidefterim.com/resmi-tatil-mesaisi-hesaplama</loc>
     <lastmod>2026-07-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /.astro/
 Disallow: /_astro/
 
-Sitemap: http://localhost:4325/sitemap.xml
+Sitemap: https://mesaidefterim.com/sitemap.xml
