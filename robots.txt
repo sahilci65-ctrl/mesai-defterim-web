@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /.astro/
+Disallow: /_astro/
+
+Sitemap: https://mesaidefterim.com/sitemap.xml
