@@ -1,71 +1,102 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Calculator from '../components/Calculator.astro';
+import Explanation from '../components/Explanation.astro';
 import FAQ from '../components/FAQ.astro';
 import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
+import { STAMP_TAX_RATE } from '../constants/parameters';
+import { formatTL, formatInt, formatPercent } from '../utils/format';
+
+// 2026 parametreleri (tek kaynak: constants/parameters.ts)
+const damgaYuzde = formatPercent(STAMP_TAX_RATE); // "0,759"
+
+// Haftalık ücret böleni (aylık ortalama hafta sayısı) — hesaplayıcıyla aynı
+const HAFTA_BOLEN = 4.33;
+const haftaBolenStr = HAFTA_BOLEN.toLocaleString('tr-TR'); // "4,33"
+
+// İhbar süresi kademeleri (İş Kanunu m.17) — hesaplayıcıyla birebir aynı
+const kademeler = [
+  { sure: "6 aydan az", hafta: 2 },
+  { sure: "6 ay - 1,5 yıl", hafta: 4 },
+  { sure: "1,5 - 3 yıl", hafta: 6 },
+  { sure: "3 yıldan fazla", hafta: 8 },
+];
+
+// Açıklama için örnek hesap: 45.000 TL, 5 yıl kıdem -> 8 hafta
+const ornMaas = 45000;
+const ornYil = 5;
+const ornHafta = 8;
+const ornHaftalik = ornMaas / HAFTA_BOLEN;
+const ornBrut = ornHaftalik * ornHafta;
+const ornDamga = ornBrut * STAMP_TAX_RATE;
+const ornNet = ornBrut - ornDamga;
 
 const faqItems = [
   {
-    question: "Ihbar tazminati nedir?",
-    answer: "Ihbar tazminati, issiz kalmasi karsiliginda verilen tazminattir. Kidem suresine gore 2, 4, 6 veya 8 haftalik ucret odenmelidir.",
+    question: "İhbar tazminatı nedir?",
+    answer: "İhbar tazminatı, iş sözleşmesi ihbar süresine uyulmadan (önceden haber verilmeden) sona erdirildiğinde, sözleşmeyi fesheden tarafın karşı tarafa ödediği tazminattır. Kıdem süresine göre 2, 4, 6 veya 8 haftalık ücrete karşılık gelir.",
   },
   {
-    question: "Ihbar suresi nasil belirlenir?",
-    answer: "Kidem suresine gore degisir: 6 aydan az = 2 hafta, 6 ay-1 yil = 2 hafta, 1-3 yil = 4 hafta, 3 yil+ = 8 hafta. Ornekle: 5 yil kidem = 8 hafta ihbar.",
+    question: "İhbar süresi kıdeme göre kaç haftadır?",
+    answer: `İş Kanunu m.17'ye göre: ${kademeler.map((k) => `${k.sure} = ${k.hafta} hafta`).join('; ')}. Örneğin ${ornYil} yıl kıdem = ${ornHafta} hafta ihbar süresine karşılık gelir.`,
   },
   {
-    question: "Haftalik ucret nasil hesaplanir?",
-    answer: "Haftalik ucret = aylik brut / 4.33. Ornekle: 45000 TL aylik = 45000 / 4.33 = 10392.49 TL haftalik.",
+    question: "Haftalık ücret nasıl hesaplanır?",
+    answer: `Haftalık ücret = aylık brüt / ${haftaBolenStr}. Örneğin ${formatInt(ornMaas)} TL aylık brüt için haftalık ücret = ${formatInt(ornMaas)} / ${haftaBolenStr} = ${formatTL(ornHaftalik)} TL olur.`,
   },
   {
-    question: "Damga vergisi ihbar tazminatinda da var mi?",
-    answer: "Evet, ihbar tazminatinin brut tutarinden damga vergisi (yuzde 0.759) kesilir.",
+    question: "İhbar tazminatından ne kadar kesinti yapılır?",
+    answer: `İhbar tazminatının brüt tutarından yüzde ${damgaYuzde} oranında damga vergisi kesilir. Kıdem tazminatından farklı olarak, ihbar tazminatı gelir vergisine tabidir; bu hesaplayıcı yalnızca damga vergisini düşen basitleştirilmiş bir sonuç verir.`,
   },
   {
-    question: "Ihbar suresi vermek zorunlu mu?",
-    answer: "Evet, issiz bolmek isteyen iscinin ihbar suresi tutmasi gerekir. Sureden once ayrilis halinde, issiz tutarini odemesi gerekebilir.",
+    question: "İhbar süresi vermek zorunlu mu?",
+    answer: "İş sözleşmesini feshetmek isteyen taraf (işçi veya işveren) ihbar süresine uymak zorundadır. Süreye uyulmadan yapılan fesihte, karşı tarafa ihbar tazminatı ödenmesi gerekir.",
+  },
+  {
+    question: "İhbar ve kıdem tazminatı birlikte alınabilir mi?",
+    answer: "Evet. Koşulları oluştuğunda ihbar tazminatı ile kıdem tazminatı birbirinden bağımsız olarak ayrı ayrı ödenebilir. İki tutarı ilgili hesaplayıcılardan ayrı ayrı hesaplayabilirsiniz.",
   },
 ];
 
 const relatedTools = [
   {
-    title: "Fazla Mesai Ucreti",
+    title: "Fazla Mesai Ücreti",
     url: "/fazla-mesai-hesaplama",
-    description: "Ayda kac saat fazla mesai yaptiysan ucretini hesapla.",
+    description: "Ayda kaç saat fazla mesai yaptıysan ücretini hesapla.",
   },
   {
-    title: "Kidem Tazminati",
+    title: "Kıdem Tazminatı",
     url: "/kidem-tazminati-hesaplama",
-    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+    description: "Kıdemin uzun olduğu durumlarda çıkış ücretini hesapla.",
   },
   {
-    title: "Net-Brut Maas",
+    title: "Net-Brüt Maaş",
     url: "/net-brut-maas-hesaplama",
-    description: "Brut ve net maas arasinda donusum yap.",
+    description: "Brüt ve net maaş arasında dönüşüm yap.",
   },
   {
     title: "Resmi Tatil Mesaisi",
     url: "/resmi-tatil-mesaisi-hesaplama",
-    description: "Resmi tatilde calisma ucretini hesapla.",
+    description: "Resmi tatilde çalışma ücretini hesapla.",
   },
 ];
 ---
 
 <BaseLayout
-  title="Ihbar Tazminati Hesaplama 2026 - Ucretsiz Araç"
-  description="Ihbar tazminati tutarini aninda hesaplayarak ne kadar alacaginizi ogrenin."
+  title="İhbar Tazminatı Hesaplama 2026 — Kıdeme Göre Ücretsiz Araç"
+  description="Kıdem sürene göre ihbar süreni (2–8 hafta) ve net ihbar tazminatını 2026 değerleriyle anında, tamamen ücretsiz ve tarayıcında gizli olarak hesapla."
 >
   <Calculator
-    title="Ihbar Tazminati Hesaplayici"
-    description="Aylik brut maasınız ve kidem yilini girin, tahmini ihbar tazminati tutarini ogrenin."
-    resultLabel="Tahmini Ihbar Tazminati (Net):"
+    title="İhbar Tazminatı Hesaplayıcı"
+    description="Aylık brüt maaşını ve kıdem süreni gir, tahmini ihbar tazminatı tutarını öğren."
+    resultLabel="Tahmini İhbar Tazminatı (Net):"
     resultValue="TL 0,00"
   >
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       <div>
-        <label for="gross-notice">Aylik Brut Maas (TL)</label><br />
+        <label for="gross-notice">Aylık Brüt Maaş (TL)</label><br />
         <input
           id="gross-notice"
           type="number"
@@ -78,7 +109,7 @@ const relatedTools = [
       </div>
 
       <div>
-        <label for="years-notice">Kidem Yili</label><br />
+        <label for="years-notice">Kıdem Yılı</label><br />
         <input
           id="years-notice"
           type="number"
@@ -93,15 +124,15 @@ const relatedTools = [
 
       <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Ihbar Suresi:</span>
+          <span>İhbar Süresi:</span>
           <strong id="notice-weeks">0</strong> <span style="margin-left: 0.25rem;">hafta</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Haftalik Ucret:</span>
+          <span>Haftalık Ücret:</span>
           <strong id="weekly-rate">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Brut Tazminat:</span>
+          <span>Brüt Tazminat:</span>
           <strong id="gross-notice-amount">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
@@ -116,11 +147,42 @@ const relatedTools = [
     </div>
   </Calculator>
 
-  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+  <Explanation>
+    <p>
+      İhbar tazminatı, iş sözleşmesi <strong>ihbar süresine uyulmadan</strong>
+      feshedildiğinde ödenir. Tutar, kıdem süresine bağlı ihbar süresi (hafta)
+      ile haftalık ücretin çarpımıdır. Hesap iki adımdan oluşur:
+    </p>
+    <ul>
+      <li><strong>Haftalık ücret</strong> = aylık brüt maaş / {haftaBolenStr} (bir ayın ortalama hafta sayısı).</li>
+      <li>
+        <strong>Brüt ihbar tazminatı</strong> = haftalık ücret × ihbar süresi (hafta).
+        İhbar süresi kıdeme göre belirlenir:
+      </li>
+    </ul>
+    <ul>
+      {kademeler.map((k) => (
+        <li>{k.sure}: <strong>{k.hafta} hafta</strong></li>
+      ))}
+    </ul>
+    <div class="example">
+      <p>
+        <strong>Örnek:</strong> {ornYil} yıl kıdemi olan, aylık {formatInt(ornMaas)} TL
+        brüt maaşlı biri. {ornYil} yıl kıdem "3 yıldan fazla" kademesine girdiği için
+        ihbar süresi <strong>{ornHafta} haftadır</strong>.
+      </p>
+      <p>Haftalık ücret = {formatInt(ornMaas)} / {haftaBolenStr} = {formatTL(ornHaftalik)} TL.</p>
+      <p>Brüt ihbar tazminatı = {formatTL(ornHaftalik)} × {ornHafta} = {formatTL(ornBrut)} TL.</p>
+      <p>Damga vergisi = {formatTL(ornBrut)} × yüzde {damgaYuzde} = {formatTL(ornDamga)} TL.</p>
+      <p class="result">Net ihbar tazminatı ≈ {formatTL(ornNet)} TL.</p>
+    </div>
+  </Explanation>
+
+  <FAQ title="Sık Sorulan Sorular" items={faqItems} />
 
   <RelatedTools tools={relatedTools} />
 
-  <AppBox campaignName="ihbar-tazminati-hesaplama" />
+  <AppBox campaignName="ihbar" />
 
   <Disclaimer />
 </BaseLayout>
@@ -131,8 +193,8 @@ const relatedTools = [
 
   function getNoticeWeeks(years) {
     if (years < 0.5) return 2;       // 6 aydan az
-    if (years < 1) return 2;         // 6 ay - 1 yil
-    if (years < 3) return 4;         // 1-3 yil
+    if (years < 1.5) return 4;       // 6 ay - 1,5 yil
+    if (years < 3) return 6;         // 1,5 - 3 yil
     return 8;                         // 3 yil+
   }
 
@@ -145,13 +207,13 @@ const relatedTools = [
       return;
     }
 
-    // Ihbar suresi
+    // İhbar süresi
     const noticeWeeks = getNoticeWeeks(years);
 
-    // Haftalik ucret = aylik / 4.33
+    // Haftalık ücret = aylık / 4.33
     const weeklyRate = gross / WEEKS_PER_MONTH;
 
-    // Brut tazminat = haftalik × hafta
+    // Brüt tazminat = haftalık × hafta
     const grossAmount = weeklyRate * noticeWeeks;
 
     // Damga vergisi

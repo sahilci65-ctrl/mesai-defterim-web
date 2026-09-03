@@ -4,7 +4,9 @@
 export const YEAR = 2026;
 
 // Asgari ücret (brüt aylık)
-export const MINIMUM_WAGE = 16500; // TL — 2026 tahmini (güncelle)
+// 2026 brüt asgari ücret. Mobil uygulamayla (calc.ts ASGARI_UCRET_2026)
+// AYNI değer olmalı — ikisi ayrışırsa net/brüt sonuçları tutmaz.
+export const MINIMUM_WAGE = 33030; // TL — 2026 brüt asgari ücret
 
 // Gelir vergisi dilimleri (2026 — enflasyona göre ayarlanmış)
 // Kümülatif matrah esası
@@ -26,8 +28,31 @@ export const SGK_RATES = {
 // Damga vergisi oranı
 export const STAMP_TAX_RATE = 0.00759; // %0.759
 
-// Kıdem tazminatı tavanı (günlük, brüt)
-export const SEVERANCE_CAP_DAILY = 343.33; // TL — 2026 (yıllık ~10.300 TL = 30 gün × 343.33)
+// Kıdem tazminatı tavanı — DÖNEM BAZLI.
+// Her TAM YIL için ödenen kıdeme esas ücret bu tavanla sınırlanır (brüt).
+// İşten çıkış tarihi hangi döneme düşüyorsa o dönemin tavanı geçerlidir.
+// Resmî değerler; yeni dönem açıklandıkça buraya eklenir.
+export const SEVERANCE_CEILINGS: {
+  start: string; // dahil (YYYY-MM-DD)
+  end: string;   // dahil (YYYY-MM-DD)
+  annualCap: number; // yıllık (bir tam yıl için) brüt tavan, TL
+}[] = [
+  { start: '2026-01-01', end: '2026-06-30', annualCap: 64948.77 },
+  { start: '2026-07-01', end: '2026-12-31', annualCap: 73729.84 },
+];
+
+// Verilen işten çıkış tarihine göre geçerli kıdem tavanını döndürür.
+// Tarih hiçbir döneme düşmüyorsa (veya verilmemişse) en güncel dönemin tavanı kullanılır.
+export function getSeveranceCeiling(exitDate?: string): number {
+  if (exitDate) {
+    for (const period of SEVERANCE_CEILINGS) {
+      if (exitDate >= period.start && exitDate <= period.end) {
+        return period.annualCap;
+      }
+    }
+  }
+  return SEVERANCE_CEILINGS[SEVERANCE_CEILINGS.length - 1].annualCap;
+}
 
 // Kıdem tazminatı hesaplanırken kullanılan gün sayısı
 export const SEVERANCE_DAYS_PER_YEAR = 30;

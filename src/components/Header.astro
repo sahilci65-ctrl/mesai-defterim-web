@@ -1,0 +1,175 @@
+---
+// Sabit üst menü — her sayfada aynı (BaseLayout içinden gelir)
+// Solda marka, sağda 5 hesaplayıcı. Mobilde hamburger (CSS checkbox hack, JS yok).
+const navLinks = [
+  { title: "Fazla Mesai", url: "/fazla-mesai-hesaplama" },
+  { title: "Kıdem Tazminatı", url: "/kidem-tazminati-hesaplama" },
+  { title: "İhbar Tazminatı", url: "/ihbar-tazminati-hesaplama" },
+  { title: "Net-Brüt Maaş", url: "/net-brut-maas-hesaplama" },
+  { title: "Resmi Tatil", url: "/resmi-tatil-mesaisi-hesaplama" },
+];
+---
+
+<header class="site-header">
+  <div class="header-container">
+    <a href="/" class="brand" aria-label="Mesai Defterim ana sayfa">
+      <span class="brand-mark">₺</span>
+      <span class="brand-text">Mesai Defterim</span>
+    </a>
+
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true" />
+    <label for="nav-toggle" class="nav-toggle-label" aria-label="Menüyü aç/kapat">
+      <span></span>
+      <span></span>
+      <span></span>
+    </label>
+
+    <nav class="site-nav" aria-label="Hesaplayıcılar">
+      {
+        navLinks.map((link) => (
+          <a href={link.url} class="nav-link">
+            {link.title}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: var(--color-primary);
+    border-bottom: 1px solid var(--color-primary-dark);
+  }
+
+  .header-container {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 56px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+    color: white;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-lg);
+  }
+
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.15);
+    font-size: 1rem;
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+
+  .nav-link {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-xs) 0;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-link:hover {
+    color: white;
+    border-bottom-color: white;
+  }
+
+  /* Hamburger — sadece mobilde görünür */
+  .nav-toggle,
+  .nav-toggle-label {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .nav-toggle-label {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      padding: 10px;
+    }
+
+    .nav-toggle-label span {
+      display: block;
+      height: 2px;
+      width: 100%;
+      background-color: white;
+      border-radius: 2px;
+      transition: transform 0.25s, opacity 0.25s;
+    }
+
+    .site-nav {
+      position: absolute;
+      top: 56px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      background-color: var(--color-primary);
+      border-bottom: 1px solid var(--color-primary-dark);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .nav-link {
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--color-primary-dark);
+      font-size: var(--font-size-base);
+      min-height: var(--touch-target);
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-link:hover {
+      background-color: var(--color-primary-dark);
+      border-bottom-color: var(--color-primary-dark);
+    }
+
+    /* Checkbox işaretliyken menüyü aç */
+    .nav-toggle:checked ~ .site-nav {
+      max-height: 400px;
+    }
+
+    /* Hamburger → çarpı animasyonu */
+    .nav-toggle:checked ~ .nav-toggle-label span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .nav-toggle:checked ~ .nav-toggle-label span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .nav-toggle:checked ~ .nav-toggle-label span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+  }
+</style>

@@ -29,3 +29,4 @@ coverage/
 # Build
 .turbo/
 .vercel/
+.gstack/

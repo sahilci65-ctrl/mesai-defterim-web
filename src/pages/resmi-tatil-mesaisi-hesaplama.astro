@@ -1,84 +1,111 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Calculator from '../components/Calculator.astro';
+import Explanation from '../components/Explanation.astro';
 import FAQ from '../components/FAQ.astro';
 import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
+import { DAYS_PER_MONTH_CALCULATION, STAMP_TAX_RATE } from '../constants/parameters';
+import { formatTL, formatInt, formatPercent } from '../utils/format';
+
+// 2026 parametreleri (tek kaynak: constants/parameters.ts)
+const gunBolen = formatInt(DAYS_PER_MONTH_CALCULATION); // "30"
+const damgaYuzde = formatPercent(STAMP_TAX_RATE); // "0,759"
+
+// Açıklama için örnek hesap: 30.000 TL, 3 gün resmi tatil çalışması
+const ornMaas = 30000;
+const ornGun = 3;
+const ornGunluk = ornMaas / DAYS_PER_MONTH_CALCULATION;
+const ornBrut = ornGunluk * ornGun;
+const ornDamga = ornBrut * STAMP_TAX_RATE;
+const ornNet = ornBrut - ornDamga;
 
 const faqItems = [
   {
-    question: "Resmi tatilde calisma ucreti nedir?",
-    answer: "Resmi tatilde calismanin karsiligi, gunluk ucretin yuzde 100'u adir. Yani ek 1 gun ucret odenmelidir. Ornekle: 45000 TL aylik, 3 gun resmi tatilde calista = (45000/30) × 3 = 4500 TL brut ek ucret.",
+    question: "Net maaşımı mı brüt maaşımı mı gireceğim?",
+    answer: "Varsayılan olarak aylık NET maaşını (eline geçen tutarı) girmen yeterlidir; çoğu çalışan brütünü değil netini bilir. Araç, net maaşını önce tahmini brüte çevirir, resmi tatil ek ücretini brüt üzerinden hesaplar ve sonucu net olarak gösterir. Bordronu biliyorsan 'Brüt gireceğim' seçeneğiyle doğrudan brüt de girebilirsin.",
   },
   {
-    question: "Resmi tatil gunleri hangileridir?",
-    answer: "Resmi tatil gunleri: Yilbasi (1 Ocak), Ulusal Egemenlik ve Cocuk Bayrami (23 Nisan), Emek ve Isci Bayrami (1 Mayis), Genclik ve Spor Bayrami (19 Mayis), Zafer Bayrami (30 Agustos), Cumhuriyet Bayrami (29 Ekim), Ramazan Bayrami, Kurban Bayrami.",
+    question: "Resmi tatilde çalışmanın ücreti nedir?",
+    answer: `Resmi tatilde çalışılan her gün için, normal maaşa ek olarak 1 günlük ücret daha ödenir (günlük ücretin yüzde 100'ü). Günlük ücret = aylık brüt / ${gunBolen}. Örneğin ${formatInt(ornMaas)} TL aylık, ${ornGun} gün resmi tatil çalışması = (${formatInt(ornMaas)}/${gunBolen}) × ${ornGun} = ${formatTL(ornBrut)} TL brüt ek ücret.`,
   },
   {
-    question: "Hafta sonu ve tatil kumulu ise?",
-    answer: "Hafta sonu ve resmi tatil kumulu ise, Is Kanunu'na gore ek odenekler yapilabilir. Detay icin muhasebe uzmanina danismaniz onemlidir.",
+    question: "Günlük ücret nasıl bulunuyor?",
+    answer: `Günlük ücret, aylık brüt maaşın ${gunBolen}'a bölünmesiyle bulunur. Resmi tatil ek ücreti bu günlük ücret ile çalışılan resmi tatil günü sayısının çarpımıdır.`,
   },
   {
-    question: "Resmi tatilde calisanlar izin kullanabiliyor mu?",
-    answer: "Resmi tatilde calisanlar, daha sonra kose gun izni alabilirler. Detaylar is sozlesmesi ve Is Kanunu kurallarina baglıdır.",
+    question: "2026 resmi tatil günleri hangileridir?",
+    answer: "Resmi tatiller: Yılbaşı (1 Ocak), Ulusal Egemenlik ve Çocuk Bayramı (23 Nisan), Emek ve Dayanışma Günü (1 Mayıs), Atatürk'ü Anma, Gençlik ve Spor Bayramı (19 Mayıs), Demokrasi ve Millî Birlik Günü (15 Temmuz), Zafer Bayramı (30 Ağustos), Cumhuriyet Bayramı (29 Ekim) ile Ramazan ve Kurban Bayramı günleridir.",
   },
   {
-    question: "Damga vergisi resmi tatil ucretinde de var mi?",
-    answer: "Evet, brut tutar uzerinden damga vergisi (yuzde 0.759) kesilir.",
+    question: "Resmi tatil ücretinden kesinti yapılır mı?",
+    answer: `Evet, brüt ek ücret üzerinden yüzde ${damgaYuzde} oranında damga vergisi kesilir; net ek ücret bu kesinti sonrası kalan tutardır.`,
+  },
+  {
+    question: "Hafta sonu ile resmi tatil aynı güne denk gelirse ne olur?",
+    answer: "Hafta tatili ile resmi tatil aynı güne denk geldiğinde ek ödemeler doğabilir. Bu özel durumlar için muhasebe uzmanına danışmanız önemlidir.",
   },
 ];
 
 const relatedTools = [
   {
-    title: "Fazla Mesai Ucreti",
+    title: "Fazla Mesai Ücreti",
     url: "/fazla-mesai-hesaplama",
-    description: "Ayda kac saat fazla mesai yaptiysan ucretini hesapla.",
+    description: "Ayda kaç saat fazla mesai yaptıysan ücretini hesapla.",
   },
   {
-    title: "Kidem Tazminati",
+    title: "Kıdem Tazminatı",
     url: "/kidem-tazminati-hesaplama",
-    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+    description: "Kıdemin uzun olduğu durumlarda çıkış ücretini hesapla.",
   },
   {
-    title: "Ihbar Tazminati",
+    title: "İhbar Tazminatı",
     url: "/ihbar-tazminati-hesaplama",
-    description: "Issiz kalmaya karsilik odenecek tutari ogren.",
+    description: "İşsiz kalmaya karşılık ödenecek tutarı öğren.",
   },
   {
-    title: "Net-Brut Maas",
+    title: "Net-Brüt Maaş",
     url: "/net-brut-maas-hesaplama",
-    description: "Brut ve net maas arasinda donusum yap.",
+    description: "Brüt ve net maaş arasında dönüşüm yap.",
   },
 ];
 ---
 
 <BaseLayout
-  title="Resmi Tatil Mesaisi Hesaplama 2026 - Ucretsiz Araç"
-  description="Resmi tatil calisma ucretini aninda hesaplayarak ne kadar alacaginizi ogrenin."
+  title="Resmi Tatil Mesaisi Ücreti Hesaplama 2026 — Ücretsiz Araç"
+  description="Aylık net maaşını ve çalıştığın resmi tatil gün sayısını gir; net resmi tatil mesaisi ek ücretini 2026 değerleriyle anında, ücretsiz ve gizli hesapla."
 >
   <Calculator
-    title="Resmi Tatil Mesaisi Hesaplayici"
-    description="Aylik brut maasınız ve calisilan resmi tatil gunu sayisini girin, ek ucretinizi ogrenin."
+    title="Resmi Tatil Mesaisi Hesaplayıcı"
+    description="Aylık net maaşını ve çalışılan resmi tatil günü sayısını gir, net ek ücretini anında öğren."
     resultLabel="Tahmini Resmi Tatil Mesaisi (Net):"
     resultValue="TL 0,00"
   >
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       <div>
-        <label for="gross-holiday">Aylik Brut Maas (TL)</label><br />
+        <label id="salary-mode-label-holiday">Maaş türü</label>
+        <div class="salary-mode" role="radiogroup" aria-labelledby="salary-mode-label-holiday">
+          <label class="mode-opt"><input type="radio" name="mode-holiday" value="net" checked /> Net maaş (elime geçen)</label>
+          <label class="mode-opt"><input type="radio" name="mode-holiday" value="gross" /> Brüt gireceğim</label>
+        </div>
+      </div>
+      <div>
+        <label for="salary-holiday" id="salary-holiday-label">Aylık Net Maaş (elime geçen) (TL)</label><br />
         <input
-          id="gross-holiday"
+          id="salary-holiday"
           type="number"
-          placeholder="45000"
+          placeholder="35000"
           min="0"
           step="100"
-          value="45000"
+          value="35000"
           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
         />
+        <small id="salary-holiday-gross-note" class="field-note"></small>
       </div>
 
       <div>
-        <label for="days-holiday">Calisilan Resmi Tatil Gunu Sayisi</label><br />
+        <label for="days-holiday">Çalışılan Resmi Tatil Günü Sayısı</label><br />
         <input
           id="days-holiday"
           type="number"
@@ -92,11 +119,11 @@ const relatedTools = [
 
       <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Gunluk Ucret:</span>
+          <span>Günlük Ücret (brüt):</span>
           <strong id="daily-rate-holiday">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Brut Ek Ucret:</span>
+          <span>Brüt Ek Ücret:</span>
           <strong id="gross-holiday-amount">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
@@ -104,58 +131,59 @@ const relatedTools = [
           <strong id="stamp-holiday">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
-          <span style="font-weight: bold;">Net Ek Ucret:</span>
+          <span style="font-weight: bold;">Net Ek Ücret:</span>
           <strong id="net-holiday">TL 0,00</strong>
         </div>
       </div>
+
+      <p id="convert-note-holiday" class="convert-note">Net-brüt dönüşümü tahminidir; kesin tutar bordro parametrelerine göre değişebilir.</p>
     </div>
   </Calculator>
 
-  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+  <Explanation>
+    <p>
+      Resmi tatil, çalışılmasa bile ücreti ödenen bir gündür. Bu günde
+      çalışıldığında, normal ücrete <strong>ek olarak 1 günlük ücret</strong> daha
+      ödenir (günlük ücretin yüzde 100'ü). Hesap iki adımdır:
+    </p>
+    <ul>
+      <li><strong>Günlük ücret</strong> = aylık brüt maaş / {gunBolen}.</li>
+      <li><strong>Brüt ek ücret</strong> = günlük ücret × çalışılan resmi tatil günü sayısı.</li>
+    </ul>
+    <p>
+      Girişte <strong>net maaşını</strong> (eline geçen tutarı) yazman yeterlidir; araç bunu
+      önce tahmini brüte çevirir, ek ücreti brüt üzerinden hesaplar ve sonucu net olarak
+      gösterir. Bordronu biliyorsan "Brüt gireceğim" seçeneğiyle doğrudan brüt girebilirsin.
+    </p>
+    <div class="example">
+      <p>
+        <strong>Örnek:</strong> Aylık {formatInt(ornMaas)} TL brüt maaşlı biri,
+        {ornGun} gün resmi tatilde çalışmış olsun.
+      </p>
+      <p>Günlük ücret = {formatInt(ornMaas)} / {gunBolen} = {formatTL(ornGunluk)} TL.</p>
+      <p>Brüt ek ücret = {formatTL(ornGunluk)} × {ornGun} = {formatTL(ornBrut)} TL.</p>
+      <p>Damga vergisi = {formatTL(ornBrut)} × yüzde {damgaYuzde} = {formatTL(ornDamga)} TL.</p>
+      <p class="result">Net resmi tatil ek ücreti ≈ {formatTL(ornNet)} TL.</p>
+    </div>
+  </Explanation>
+
+  <FAQ title="Sık Sorulan Sorular" items={faqItems} />
 
   <RelatedTools tools={relatedTools} />
 
-  <AppBox campaignName="resmi-tatil-mesaisi-hesaplama" />
+  <AppBox campaignName="resmi-tatil" />
 
   <Disclaimer />
 </BaseLayout>
 
 <script>
-  const STAMP_TAX_RATE = 0.00759;
-  const DAYS_PER_MONTH = 30;
+  import { calculateGrossFromNet, calculatePublicHolidayWork } from '../utils/calc-web';
 
-  function calculateHoliday() {
-    const gross = parseFloat(document.getElementById('gross-holiday').value) || 0;
-    const days = parseFloat(document.getElementById('days-holiday').value) || 0;
+  const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
-    if (gross <= 0 || days <= 0) {
-      resetDisplay();
-      return;
-    }
-
-    // Gunluk ucret = aylik / 30
-    const dailyRate = gross / DAYS_PER_MONTH;
-
-    // Brut ek ucret = gunluk × gun
-    const grossAmount = dailyRate * days;
-
-    // Damga vergisi
-    const stampTax = grossAmount * STAMP_TAX_RATE;
-
-    // Net
-    const netAmount = Math.max(0, grossAmount - stampTax);
-
-    // Format
-    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-
-    document.getElementById('daily-rate-holiday').textContent = `TL ${fmt(dailyRate)}`;
-    document.getElementById('gross-holiday-amount').textContent = `TL ${fmt(grossAmount)}`;
-    document.getElementById('stamp-holiday').textContent = `-TL ${fmt(stampTax)}`;
-    document.getElementById('net-holiday').textContent = `TL ${fmt(netAmount)}`;
-
-    // Calculator bileşenini güncelle
-    const resultValue = document.getElementById('result-value');
-    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
+  function currentMode() {
+    const checked = document.querySelector('input[name="mode-holiday"]:checked');
+    return checked ? checked.value : 'net';
   }
 
   function resetDisplay() {
@@ -163,25 +191,66 @@ const relatedTools = [
     document.getElementById('gross-holiday-amount').textContent = 'TL 0,00';
     document.getElementById('stamp-holiday').textContent = '-TL 0,00';
     document.getElementById('net-holiday').textContent = 'TL 0,00';
-
-    const resultValue = document.getElementById('result-value');
-    if (resultValue) resultValue.textContent = 'TL 0,00';
+    const rv = document.getElementById('result-value');
+    if (rv) rv.textContent = 'TL 0,00';
   }
 
-  function init() {
-    const grossInput = document.getElementById('gross-holiday');
+  function recalc() {
+    const salaryInput = document.getElementById('salary-holiday');
     const daysInput = document.getElementById('days-holiday');
+    const salaryLabel = document.getElementById('salary-holiday-label');
+    const grossNote = document.getElementById('salary-holiday-gross-note');
+    const convertNote = document.getElementById('convert-note-holiday');
 
-    if (!grossInput || !daysInput) {
-      console.error('Resmi tatil: input elemanlari bulunamadi');
+    const mode = currentMode();
+    const raw = parseFloat(salaryInput.value) || 0;
+    const days = parseFloat(daysInput.value) || 0;
+
+    // Etiket ve not görünürlüğü
+    salaryLabel.textContent = mode === 'net'
+      ? 'Aylık Net Maaş (elime geçen) (TL)'
+      : 'Aylık Brüt Maaş (TL)';
+    convertNote.style.display = mode === 'net' ? 'block' : 'none';
+
+    if (raw <= 0 || days <= 0) {
+      grossNote.textContent = '';
+      resetDisplay();
       return;
     }
 
-    grossInput.addEventListener('input', calculateHoliday);
-    daysInput.addEventListener('input', calculateHoliday);
+    // Net girildiyse önce tahmini brüte çevir (mevzuat brüt üzerinden hesaplar)
+    let grossSalary = raw;
+    if (mode === 'net') {
+      grossSalary = calculateGrossFromNet(raw).gross;
+      grossNote.textContent = `Tahmini aylık brüt: ${fmt(grossSalary)} TL`;
+    } else {
+      grossNote.textContent = '';
+    }
 
-    // Initial calculation
-    calculateHoliday();
+    const r = calculatePublicHolidayWork(grossSalary, days);
+
+    document.getElementById('daily-rate-holiday').textContent = `TL ${fmt(r.dailyRate)}`;
+    document.getElementById('gross-holiday-amount').textContent = `TL ${fmt(r.grossAmount)}`;
+    document.getElementById('stamp-holiday').textContent = `-TL ${fmt(r.stampTax)}`;
+    document.getElementById('net-holiday').textContent = `TL ${fmt(r.netAmount)}`;
+
+    const rv = document.getElementById('result-value');
+    if (rv) rv.textContent = `TL ${fmt(r.netAmount)}`;
+  }
+
+  function init() {
+    const salaryInput = document.getElementById('salary-holiday');
+    const daysInput = document.getElementById('days-holiday');
+    if (!salaryInput || !daysInput) {
+      console.error('Resmi tatil: input elemanlari bulunamadi');
+      return;
+    }
+    salaryInput.addEventListener('input', recalc);
+    daysInput.addEventListener('input', recalc);
+    document.querySelectorAll('input[name="mode-holiday"]').forEach((el) => {
+      el.addEventListener('change', recalc);
+    });
+    recalc();
   }
 
   if (document.readyState === 'loading') {
@@ -198,5 +267,43 @@ const relatedTools = [
     color: #1f2937;
     font-size: 1rem;
     margin-bottom: 0.5rem;
+  }
+
+  .salary-mode {
+    display: flex;
+    gap: 0.5rem 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .mode-opt {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 400;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+    cursor: pointer;
+    color: #1f2937;
+    min-height: 44px;
+  }
+
+  .mode-opt input {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+  }
+
+  .field-note {
+    display: block;
+    margin-top: 0.35rem;
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+
+  .convert-note {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+    font-style: italic;
   }
 </style>

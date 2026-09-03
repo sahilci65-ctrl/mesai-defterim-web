@@ -22,7 +22,6 @@ const { tools } = Astro.props;
           <a href={tool.url} class="tool-card">
             <h3>{tool.title}</h3>
             <p>{tool.description}</p>
-            <span class="arrow">→</span>
           </a>
         ))
       }
@@ -83,11 +82,6 @@ const { tools } = Astro.props;
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     flex-grow: 1;
-    margin-bottom: var(--space-md);
-  }
-
-  .tool-card .arrow {
-    color: var(--color-primary);
-    font-weight: bold;
+    margin-bottom: 0;
   }
 </style>

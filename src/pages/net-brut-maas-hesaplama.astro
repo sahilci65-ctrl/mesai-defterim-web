@@ -1,71 +1,103 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Calculator from '../components/Calculator.astro';
+import Explanation from '../components/Explanation.astro';
 import FAQ from '../components/FAQ.astro';
 import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
+import {
+  MINIMUM_WAGE,
+  SGK_RATES,
+  TAX_BRACKETS,
+  STAMP_TAX_RATE,
+} from '../constants/parameters';
+import { formatTL, formatInt, formatPercent } from '../utils/format';
+
+// 2026 parametreleri (tek kaynak: constants/parameters.ts)
+const minWageStr = formatInt(MINIMUM_WAGE); // "16.500"
+const sgkYuzde = formatPercent(SGK_RATES.total, 0); // "15"
+const damgaYuzde = formatPercent(STAMP_TAX_RATE); // "0,759"
+const ilkDilimYuzde = formatPercent(TAX_BRACKETS[0].rate, 0); // "15"
+
+// Vergi dilimleri açıklaması — doğrudan parametrelerden üretilir
+const dilimAcik = TAX_BRACKETS.map((b, i) => {
+  const oran = formatPercent(b.rate, 0);
+  const altStr = i === 0 ? '0' : formatInt(TAX_BRACKETS[i - 1].limit + 1);
+  if (!isFinite(b.limit)) {
+    return `${altStr} TL ve üzeri yüzde ${oran}`;
+  }
+  return `${altStr} - ${formatInt(b.limit)} TL arası yüzde ${oran}`;
+}).join('; ');
+
+// Açıklama için örnek hesap: 30.000 TL brüt (sayfadaki hesaplayıcıyla aynı mantık)
+const ornBrut = 30000;
+const ornSgk = ornBrut > MINIMUM_WAGE ? (ornBrut - MINIMUM_WAGE) * SGK_RATES.total : 0;
+const ornMatrah = ornBrut - ornSgk;
+const ornVergi = ornMatrah * TAX_BRACKETS[0].rate; // matrah ilk dilimde
+const ornDamga = ornBrut * STAMP_TAX_RATE;
+const ornNet = ornBrut - ornSgk - ornVergi - ornDamga;
 
 const faqItems = [
   {
-    question: "Brut ve net maas farki nedir?",
-    answer: "Brut maas, kesintisiz toplam maasınızdır. Net maas, SGK (yuzde 15), gelir vergisi ve damga vergisi (yuzde 0.759) kesintisi yapildiktan sonra elde edeceginiz tutar.",
+    question: "Brüt ve net maaş farkı nedir?",
+    answer: `Brüt maaş, kesintiler yapılmadan önceki toplam maaşınızdır. Net maaş ise SGK işçi payı (yüzde ${sgkYuzde}), gelir vergisi ve damga vergisi (yüzde ${damgaYuzde}) kesildikten sonra elinize geçen tutardır.`,
   },
   {
-    question: "Asgari ucret istisnasi nedir?",
-    answer: "Asgari ücrete kadar SGK kesintisi uygulanmaz. Ornekle: asgari ucret 16500 TL ise, 16500 TL'ye kadar SGK yok, fazlası uzerinden yuzde 15 kesintisi yapilir.",
+    question: "Asgari ücret istisnası nedir?",
+    answer: `Asgari ücrete kadar olan kısım kesinti/istisna kapsamındadır. Bu hesaplayıcıda asgari ücret ${minWageStr} TL alınır; bu tutara kadarki kısım için SGK kesintisi uygulanmaz, aşan kısım üzerinden hesap yapılır.`,
   },
   {
-    question: "Vergi dilimleri nelerdir?",
-    answer: "2026 vergi dilimleri: 0-95.000 TL'de yuzde 15, 95.001-540.000 TL'de yuzde 20, 540.001-1.800.000 TL'de yuzde 27, 1.800.001+ TL'de yuzde 35.",
+    question: "2026 gelir vergisi dilimleri nelerdir?",
+    answer: `2026 gelir vergisi dilimleri: ${dilimAcik}. Vergi, kümülatif matraha göre dilim dilim uygulanır.`,
   },
   {
-    question: "Brut maaş artmak net'te az artış saglıyor mu?",
-    answer: "Evet. Brut arttiginda, hem SGK hem vergi yeni dilime ilerleyebilir. Ornekle: 95000 TL'den 96000 TL'ye ciktigi zaman, yeni 1000 TL yuzde 20 vergi odersiniz. Net artis brut artisten daha az olur.",
+    question: "Brüt artınca net neden daha az artıyor?",
+    answer: "Brüt arttığında hem SGK primi hem de gelir vergisi artar; ayrıca gelir bir üst vergi dilimine geçebilir. Bu nedenle brüt maaştaki artışın tamamı nete yansımaz.",
   },
   {
-    question: "Hesaplamalar kesin mi?",
-    answer: "Hayir, tahmindir. Gerçek hesaplama muhasebeci tarafından yapilir. Bazi isletmeler özel kesintiler veya artislar uygulayabilir.",
+    question: "Sonuç kesin mi?",
+    answer: "Hayır, tahminidir. Gerçek bordro; yıl içinde biriken kümülatif vergi matrahı, asgari ücret gelir vergisi istisnası ve iş yerine özgü kesintilerle muhasebe tarafından hesaplanır. Bu araç, kümülatif matrahı basitleştirerek yaklaşık bir sonuç verir.",
   },
 ];
 
 const relatedTools = [
   {
-    title: "Fazla Mesai Ucreti",
+    title: "Fazla Mesai Ücreti",
     url: "/fazla-mesai-hesaplama",
-    description: "Ayda kac saat fazla mesai yaptiysan ucretini hesapla.",
+    description: "Ayda kaç saat fazla mesai yaptıysan ücretini hesapla.",
   },
   {
-    title: "Kidem Tazminati",
+    title: "Kıdem Tazminatı",
     url: "/kidem-tazminati-hesaplama",
-    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+    description: "Kıdemin uzun olduğu durumlarda çıkış ücretini hesapla.",
   },
   {
-    title: "Ihbar Tazminati",
+    title: "İhbar Tazminatı",
     url: "/ihbar-tazminati-hesaplama",
-    description: "Issiz kalmaya karsilik odenecek tutari ogren.",
+    description: "İşsiz kalmaya karşılık ödenecek tutarı öğren.",
   },
   {
     title: "Resmi Tatil Mesaisi",
     url: "/resmi-tatil-mesaisi-hesaplama",
-    description: "Resmi tatilde calisma ucretini hesapla.",
+    description: "Resmi tatilde çalışma ücretini hesapla.",
   },
 ];
 ---
 
 <BaseLayout
-  title="Net-Brut Maas Cevirici 2026 - Ucretsiz Araç"
-  description="Brut ve net maas arasinda aninda donusum yapin."
+  title="Net-Brüt Maaş Hesaplama 2026 — Ücretsiz Online Çevirici"
+  description="Brütten nete, netten brüte çevir. 2026 gelir vergisi dilimleri, SGK primi ve damga vergisiyle net maaşını anında, ücretsiz ve gizli hesapla."
 >
   <Calculator
-    title="Net-Brut Maas Cevirici"
-    description="Brut veya net maassinizi girin, otomatik olarak diger tutari gosterilir."
-    resultLabel="Net Maasınız:"
+    title="Net-Brüt Maaş Çevirici"
+    description="Brüt veya net maaşını gir, diğer tutar tüm kesintileriyle birlikte otomatik hesaplansın."
+    resultLabel="Net Maaşın:"
     resultValue="TL 0,00"
   >
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       <div>
-        <label for="gross-netbrut">Aylik Brut Maas (TL)</label><br />
+        <label for="gross-netbrut">Aylık Brüt Maaş (TL)</label><br />
         <input
           id="gross-netbrut"
           type="number"
@@ -78,7 +110,7 @@ const relatedTools = [
       </div>
 
       <div>
-        <label for="net-netbrut">VEYA Aylik Net Maas (TL)</label><br />
+        <label for="net-netbrut">VEYA Aylık Net Maaş (TL)</label><br />
         <input
           id="net-netbrut"
           type="number"
@@ -92,11 +124,11 @@ const relatedTools = [
 
       <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Brut Maas:</span>
+          <span>Brüt Maaş:</span>
           <strong id="display-gross">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
-          <span>SGK Kesintisi (yuzde 15):</span>
+          <span>SGK Kesintisi:</span>
           <strong id="display-sgk">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
@@ -104,22 +136,46 @@ const relatedTools = [
           <strong id="display-tax">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
-          <span>Damga Vergisi (yuzde 0.759):</span>
+          <span>Damga Vergisi (yüzde 0,759):</span>
           <strong id="display-stamp">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
-          <span style="font-weight: bold;">Net Maas:</span>
+          <span style="font-weight: bold;">Net Maaş:</span>
           <strong id="display-net">TL 0,00</strong>
         </div>
       </div>
     </div>
   </Calculator>
 
-  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+  <Explanation>
+    <p>
+      Net maaş, brüt maaştan üç kalemin düşülmesiyle bulunur. Hesaplayıcı bunu
+      hem brütten nete hem de netten brüte doğru yapar. Kesintiler:
+    </p>
+    <ul>
+      <li><strong>SGK işçi payı (yüzde {sgkYuzde}):</strong> Asgari ücrete ({minWageStr} TL) isabet eden kısım istisna tutularak, aşan tutar üzerinden hesaplanır.</li>
+      <li><strong>Gelir vergisi:</strong> SGK sonrası kalan matraha, dilimlere göre uygulanır (ilk dilim yüzde {ilkDilimYuzde}).</li>
+      <li><strong>Damga vergisi (yüzde {damgaYuzde}):</strong> Brüt maaş üzerinden alınır.</li>
+    </ul>
+    <div class="example">
+      <p><strong>Örnek:</strong> Aylık {formatInt(ornBrut)} TL brüt maaş.</p>
+      <p>SGK = ({formatInt(ornBrut)} − {minWageStr}) × yüzde {sgkYuzde} = {formatTL(ornSgk)} TL.</p>
+      <p>Gelir vergisi = {formatTL(ornMatrah)} × yüzde {ilkDilimYuzde} = {formatTL(ornVergi)} TL.</p>
+      <p>Damga vergisi = {formatInt(ornBrut)} × yüzde {damgaYuzde} = {formatTL(ornDamga)} TL.</p>
+      <p class="result">Net maaş ≈ {formatTL(ornNet)} TL.</p>
+    </div>
+    <p>
+      Not: Gerçek bordroda vergi, yıl boyunca biriken <strong>kümülatif matraha</strong>
+      göre arttığı için aylar ilerledikçe net maaş bir miktar düşebilir. Bu araç
+      kümülatif matrahı basitleştirdiğinden sonuç yaklaşıktır.
+    </p>
+  </Explanation>
+
+  <FAQ title="Sık Sorulan Sorular" items={faqItems} />
 
   <RelatedTools tools={relatedTools} />
 
-  <AppBox campaignName="net-brut-maas-hesaplama" />
+  <AppBox campaignName="net-brut" />
 
   <Disclaimer />
 </BaseLayout>

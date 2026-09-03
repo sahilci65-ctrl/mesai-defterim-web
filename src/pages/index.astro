@@ -5,32 +5,32 @@ import Disclaimer from '../components/Disclaimer.astro';
 
 const calculators = [
   {
-    title: "Fazla Mesai Ucreti",
-    description: "Ayda kac saat fazla mesai yaptigin ve brut maasinin oranina gore ek ucretini hesapla.",
+    title: "Fazla Mesai Ücreti",
+    description: "Ayda kaç saat fazla mesai yaptığını ve brüt maaşını gir, ek ücretini anında hesapla.",
     url: "/fazla-mesai-hesaplama",
     icon: "⏰",
   },
   {
-    title: "Kidem Tazminati",
-    description: "Is yerinden ayrilis halinde alacagin kidem tazminatini kesin hesapla.",
+    title: "Kıdem Tazminatı",
+    description: "İş yerinden ayrılırken alacağın kıdem tazminatını kıdem sürene göre hesapla.",
     url: "/kidem-tazminati-hesaplama",
     icon: "📋",
   },
   {
-    title: "Ihbar Tazminati",
-    description: "Kidem suresine gore belirlenen ihbar tazminatini ani hesapla.",
+    title: "İhbar Tazminatı",
+    description: "Kıdem süresine göre belirlenen ihbar tazminatını anında hesapla.",
     url: "/ihbar-tazminati-hesaplama",
     icon: "📢",
   },
   {
-    title: "Net-Brut Maas",
-    description: "Brut ve net maas arasinda iki yonlu donusum yap, tum kesintileri gor.",
+    title: "Net-Brüt Maaş",
+    description: "Brüt ve net maaş arasında iki yönlü dönüşüm yap, tüm kesintileri gör.",
     url: "/net-brut-maas-hesaplama",
     icon: "💰",
   },
   {
     title: "Resmi Tatil Mesaisi",
-    description: "Resmi tatilde calisma saatinin karsiliginda alacagin ek ucreti hesapla.",
+    description: "Resmi tatilde çalışmanın karşılığında alacağın ek ücreti hesapla.",
     url: "/resmi-tatil-mesaisi-hesaplama",
     icon: "🎉",
   },
@@ -38,25 +38,25 @@ const calculators = [
 ---
 
 <BaseLayout
-  title="Mesai Defterim - Ucret Hesaplama Araclari 2026"
-  description="Turk is yasalarinin 2026 parametrelerine gore brut-net, kidem, ihbar, fazla mesai ve resmi tatil ucretlerini aninda hesapla."
+  title="Mesai Defterim — Kıdem, İhbar, Maaş ve Mesai Hesaplama 2026"
+  description="Kıdem ve ihbar tazminatı, net-brüt maaş, fazla mesai ve resmi tatil ücretini 2026 değerleriyle ücretsiz, anında ve tarayıcında gizli hesapla."
 >
-  <!-- Ust Bilgi -->
+  <!-- Üst Bilgi -->
   <section class="hero">
     <div class="hero-container">
-      <h1>Ucret Hesaplama Araclari</h1>
+      <h1>Ücret Hesaplama Araçları</h1>
       <p>
-        Mesai Defterim web hesaplamacilari, Turk is yasalarinin en guncel
-        parametrelerine gore hazirlanmistir. Tum hesaplamalar anlık, ucretsiz
-        ve gizli (sunucuya veri gitmez).
+        Mesai Defterim web hesaplayıcıları, Türk iş yasalarının en güncel
+        parametrelerine göre hazırlanmıştır. Tüm hesaplamalar anında, ücretsiz
+        ve gizlidir (verileriniz sunucuya gitmez).
       </p>
     </div>
   </section>
 
-  <!-- Hesaplamaci Kartlari -->
+  <!-- Hesaplayıcı Kartları -->
   <section class="calculators-section">
     <div class="calculators-container">
-      <h2>Bos Araçlar (2026)</h2>
+      <h2>Ücretsiz Hesaplama Araçları (2026)</h2>
       <div class="calculators-grid">
         {
           calculators.map((calc) => (
@@ -64,7 +64,6 @@ const calculators = [
               <div class="card-icon">{calc.icon}</div>
               <h3>{calc.title}</h3>
               <p>{calc.description}</p>
-              <span class="card-arrow">→</span>
             </a>
           ))
         }
@@ -72,8 +71,8 @@ const calculators = [
     </div>
   </section>
 
-  <!-- Uygulama Tanitiml -->
-  <AppBox campaignName="index" />
+  <!-- Uygulama Tanıtımı -->
+  <AppBox campaignName="footer" />
 
   <!-- Bağımsızlık Beyanı -->
   <Disclaimer />
@@ -137,10 +136,11 @@ const calculators = [
     background-color: var(--color-surface);
     border: 2px solid var(--color-border);
     border-radius: 12px;
-    transition: all 0.3s;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     text-decoration: none;
     color: inherit;
-    min-height: 260px;
+    min-height: 220px;
+    cursor: pointer;
   }
 
   .calculator-card:hover {
@@ -165,14 +165,8 @@ const calculators = [
     font-size: var(--font-size-base);
     color: var(--color-text-secondary);
     flex-grow: 1;
-    margin-bottom: var(--space-md);
+    margin-bottom: 0;
     line-height: var(--line-height-normal);
-  }
-
-  .card-arrow {
-    color: var(--color-primary);
-    font-weight: bold;
-    font-size: var(--font-size-lg);
   }
 
   @media (max-width: 768px) {

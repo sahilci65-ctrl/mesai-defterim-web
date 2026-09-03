@@ -9,6 +9,9 @@
       Bakanlığı, SGK veya herhangi bir resmi kurumla ilişkisi yoktur.
       Hesaplamalar bilgilendirme amaçlıdır ve hukuki tavsiye yerine geçmez.
     </p>
+    <nav class="disclaimer-links" aria-label="Alt bilgi bağlantıları">
+      <a href="/gizlilik">Gizlilik Politikası</a>
+    </nav>
   </div>
 </footer>
 
@@ -29,5 +32,21 @@
     color: var(--color-text-secondary);
     line-height: var(--line-height-relaxed);
     text-align: center;
+  }
+
+  .disclaimer-links {
+    margin-top: var(--space-md);
+    text-align: center;
+  }
+
+  .disclaimer-links a {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+  }
+
+  .disclaimer-links a:hover {
+    text-decoration: underline;
   }
 </style>

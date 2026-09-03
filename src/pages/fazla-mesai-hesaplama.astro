@@ -1,76 +1,109 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Calculator from '../components/Calculator.astro';
+import Explanation from '../components/Explanation.astro';
 import FAQ from '../components/FAQ.astro';
 import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
+import {
+  WORKING_DAYS_PER_MONTH,
+  OVERTIME_MULTIPLIER,
+  STAMP_TAX_RATE,
+} from '../constants/parameters';
+import { formatTL, formatInt, formatPercent } from '../utils/format';
+
+// 2026 parametreleri (tek kaynak: constants/parameters.ts)
+const saatBolen = formatInt(WORKING_DAYS_PER_MONTH); // "225"
+const carpan = OVERTIME_MULTIPLIER.toLocaleString('tr-TR'); // "1,5"
+const artisYuzde = formatPercent(OVERTIME_MULTIPLIER - 1, 0); // "50"
+const damgaYuzde = formatPercent(STAMP_TAX_RATE); // "0,759"
+
+// Açıklama için örnek hesap (parametrelerden türetilir)
+const ornekMaas = 30000;
+const ornekSaat = 10;
+const ornekSaatlik = ornekMaas / WORKING_DAYS_PER_MONTH;
+const ornekBrut = ornekSaatlik * ornekSaat * OVERTIME_MULTIPLIER;
+const ornekDamga = ornekBrut * STAMP_TAX_RATE;
+const ornekNet = ornekBrut - ornekDamga;
 
 const faqItems = [
   {
-    question: "Fazla mesai nasil hesaplanir?",
-    answer: "Saatlik ucret = aylik brut / 225. Fazla mesai ucreti = saatlik ucret × saat × 1.5 (Is Kanunu m.41). Ornekle: 45000 TL aylik, 10 saat fazla mesai = (45000/225) × 10 × 1.5 = 3000 TL brut.",
+    question: "Net maaşımı mı brüt maaşımı mı gireceğim?",
+    answer: "Varsayılan olarak aylık NET maaşını (eline geçen tutarı) girmen yeterlidir; çoğu çalışan brütünü değil netini bilir. Araç, net maaşını önce tahmini brüte çevirir, fazla mesai hesabını mevzuat gereği brüt üzerinden yapar ve sonucu net olarak gösterir. Bordronu biliyorsan 'Brüt gireceğim' seçeneğiyle doğrudan brüt de girebilirsin.",
   },
   {
-    question: "Is Kanunu m.41 nedir?",
-    answer: "Is Kanunu 41. madde, fazla mesai ucretlerinin en az yuzde 50 artisliyla odenecegini belirtir. Yani normal saatlik ucretin 1.5 kati odenmelidir.",
+    question: "Fazla mesai nasıl hesaplanır?",
+    answer: `Saatlik ücret = aylık brüt / ${saatBolen}. Fazla mesai ücreti = saatlik ücret × saat × ${carpan} (İş Kanunu m.41). Bulunan brüt tutardan yüzde ${damgaYuzde} damga vergisi düşülür.`,
   },
   {
-    question: "225 saat nereden geliyor?",
-    answer: "Aylik calisma saati 30 gun × 7.5 saat = 225 saattir. Bu standart hesaplamada kullanilir.",
+    question: "İş Kanunu m.41 nedir?",
+    answer: `İş Kanunu 41. madde, fazla çalışma ücretinin normal saat ücretinin en az yüzde ${artisYuzde} fazlasıyla ödeneceğini belirtir. Yani her fazla mesai saati için saatlik ücretin ${carpan} katı ödenmelidir.`,
   },
   {
-    question: "Gece calismasi artisi var mi?",
-    answer: "Bu hesaplamaci standart fazla mesai ucretini gosterir. Gece calismasi, pazar, bayram gibi ozel durumlarin artisi icin muhasebe uzmanina danismaniz onemlidir.",
+    question: `Saatlik ücret neden aylık maaşın ${saatBolen}'e bölünmesiyle bulunuyor?`,
+    answer: `Standart aylık çalışma süresi 30 gün × 7,5 saat = ${saatBolen} saat kabul edilir. Bu yüzden saatlik ücret, aylık brüt maaşın ${saatBolen}'e bölünmesiyle bulunur.`,
+  },
+  {
+    question: "Gece çalışmasının veya bayram mesaisinin artışı dahil mi?",
+    answer: "Bu hesaplayıcı standart fazla mesai ücretini gösterir. Gece çalışması, hafta tatili, resmi tatil ve bayram gibi özel durumların ek artışları için muhasebe uzmanına danışmanız önemlidir.",
   },
 ];
 
 const relatedTools = [
   {
-    title: "Kidem Tazminati",
+    title: "Kıdem Tazminatı",
     url: "/kidem-tazminati-hesaplama",
-    description: "Kidemin uzun oldugu durumlarda cikis ucreti hesapla.",
+    description: "Kıdemin uzun olduğu durumlarda çıkış ücretini hesapla.",
   },
   {
-    title: "Ihbar Tazminati",
+    title: "İhbar Tazminatı",
     url: "/ihbar-tazminati-hesaplama",
-    description: "Issiz kalmaya karsilik odenecek tutari ogren.",
+    description: "İşsiz kalmaya karşılık ödenecek tutarı öğren.",
   },
   {
-    title: "Net-Brut Maas",
+    title: "Net-Brüt Maaş",
     url: "/net-brut-maas-hesaplama",
-    description: "Brut ve net maas arasinda donusum yap.",
+    description: "Brüt ve net maaş arasında dönüşüm yap.",
   },
   {
     title: "Resmi Tatil Mesaisi",
     url: "/resmi-tatil-mesaisi-hesaplama",
-    description: "Resmi tatilde calisma ucretini hesapla.",
+    description: "Resmi tatilde çalışma ücretini hesapla.",
   },
 ];
 ---
 
 <BaseLayout
-  title="Fazla Mesai Hesaplama 2026 - Ucuz Arac"
-  description="Fazla mesai ucretini aninda hesaplayarak ne kadar alacaginizi ogrenin."
+  title="Fazla Mesai Ücreti Hesaplama 2026 — Ücretsiz Online Araç"
+  description="Aylık net maaşını ve fazla mesai saatini gir; İş Kanunu m.41'e göre 1,5 kat fazla mesai net ücretini 2026 değerleriyle anında, ücretsiz hesapla."
 >
   <Calculator
-    title="Fazla Mesai Ucreti Hesaplayici"
-    description="Aylik brut maasınızı ve fazla mesai saatini girin, net ucretinizi ogrening."
-    resultLabel="Tahmini Fazla Mesai Net Ucreti:"
+    title="Fazla Mesai Ücreti Hesaplayıcı"
+    description="Aylık net maaşını ve fazla mesai saatini gir, tahmini net ücretini anında öğren."
+    resultLabel="Tahmini Fazla Mesai Net Ücreti:"
     resultValue="TL 0,00"
   >
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       <div>
-        <label for="gross-overtime">Aylik Brut Maas (TL)</label><br />
+        <label id="salary-mode-label-overtime">Maaş türü</label>
+        <div class="salary-mode" role="radiogroup" aria-labelledby="salary-mode-label-overtime">
+          <label class="mode-opt"><input type="radio" name="mode-overtime" value="net" checked /> Net maaş (elime geçen)</label>
+          <label class="mode-opt"><input type="radio" name="mode-overtime" value="gross" /> Brüt gireceğim</label>
+        </div>
+      </div>
+      <div>
+        <label for="salary-overtime" id="salary-overtime-label">Aylık Net Maaş (elime geçen) (TL)</label><br />
         <input
-          id="gross-overtime"
+          id="salary-overtime"
           type="number"
-          placeholder="45000"
+          placeholder="35000"
           min="0"
           step="100"
-          value="45000"
+          value="35000"
           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
         />
+        <small id="salary-overtime-gross-note" class="field-note"></small>
       </div>
       <div>
         <label for="hours-overtime">Fazla Mesai Saati</label><br />
@@ -87,11 +120,11 @@ const relatedTools = [
 
       <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Saatlik Ucret:</span>
+          <span>Saatlik Ücret (brüt):</span>
           <strong id="hourly-rate">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Brut Ucret:</span>
+          <span>Brüt Fazla Mesai:</span>
           <strong id="gross-amount">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
@@ -99,67 +132,137 @@ const relatedTools = [
           <strong id="stamp-amount">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
-          <span style="font-weight: bold;">Net Ucret:</span>
+          <span style="font-weight: bold;">Net Fazla Mesai Ücreti:</span>
           <strong id="net-amount">TL 0,00</strong>
         </div>
       </div>
+
+      <p id="convert-note-overtime" class="convert-note">Net-brüt dönüşümü tahminidir; kesin tutar bordro parametrelerine göre değişebilir.</p>
     </div>
   </Calculator>
 
-  <FAQ title="Sik Sorulan Sorular" items={faqItems} />
+  <Explanation>
+    <p>
+      Fazla mesai ücreti, normal saatlik ücretinin en az <strong>yüzde {artisYuzde}</strong>
+      fazlasıyla, yani <strong>{carpan} katı</strong> olarak ödenir (İş Kanunu m.41).
+      Hesap üç adımda yapılır:
+    </p>
+    <ul>
+      <li>
+        <strong>Saatlik ücret</strong> = aylık brüt maaş / {saatBolen}.
+        ({saatBolen} sayısı, 30 gün × 7,5 saatlik standart aylık çalışma süresidir.)
+      </li>
+      <li><strong>Brüt fazla mesai</strong> = saatlik ücret × fazla mesai saati × {carpan}.</li>
+      <li><strong>Net ücret</strong> = brüt tutardan yüzde {damgaYuzde} damga vergisi düşülür.</li>
+    </ul>
+    <p>
+      Girişte <strong>net maaşını</strong> (eline geçen tutarı) yazman yeterlidir; araç bunu
+      önce tahmini brüte çevirir, hesabı mevzuat gereği brüt üzerinden yapar ve sonucu net
+      olarak gösterir. Bordronu biliyorsan "Brüt gireceğim" seçeneğiyle doğrudan brüt girebilirsin.
+    </p>
+    <div class="example">
+      <p>
+        <strong>Örnek:</strong> Aylık {formatInt(ornekMaas)} TL brüt maaşlı biri, bir ayda
+        {ornekSaat} saat fazla mesai yapmış olsun.
+      </p>
+      <p>Saatlik ücret = {formatInt(ornekMaas)} / {saatBolen} = {formatTL(ornekSaatlik)} TL.</p>
+      <p>Brüt fazla mesai = {formatTL(ornekSaatlik)} × {ornekSaat} × {carpan} = {formatTL(ornekBrut)} TL.</p>
+      <p>Damga vergisi = {formatTL(ornekBrut)} × yüzde {damgaYuzde} = {formatTL(ornekDamga)} TL.</p>
+      <p class="result">Net fazla mesai ücreti ≈ {formatTL(ornekNet)} TL.</p>
+    </div>
+  </Explanation>
+
+  <FAQ title="Sık Sorulan Sorular" items={faqItems} />
 
   <RelatedTools tools={relatedTools} />
 
-  <AppBox campaignName="fazla-mesai-hesaplama" />
+  <AppBox campaignName="fazla-mesai" />
 
   <Disclaimer />
 </BaseLayout>
 
 <script>
-  function calculateOvertime() {
-    const gross = parseFloat(document.getElementById('gross-overtime').value) || 0;
-    const hours = parseFloat(document.getElementById('hours-overtime').value) || 0;
+  import { calculateGrossFromNet, calculateOvertime } from '../utils/calc-web';
 
-    if (gross <= 0 || hours <= 0) {
-      document.getElementById('hourly-rate').textContent = 'TL 0,00';
-      document.getElementById('gross-amount').textContent = 'TL 0,00';
-      document.getElementById('stamp-amount').textContent = '-TL 0,00';
-      document.getElementById('net-amount').textContent = 'TL 0,00';
-      const resultValue = document.getElementById('result-value');
-      if (resultValue) resultValue.textContent = 'TL 0,00';
+  const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+  function currentMode() {
+    const checked = document.querySelector('input[name="mode-overtime"]:checked');
+    return checked ? checked.value : 'net';
+  }
+
+  function resetDisplay() {
+    document.getElementById('hourly-rate').textContent = 'TL 0,00';
+    document.getElementById('gross-amount').textContent = 'TL 0,00';
+    document.getElementById('stamp-amount').textContent = '-TL 0,00';
+    document.getElementById('net-amount').textContent = 'TL 0,00';
+    const rv = document.getElementById('result-value');
+    if (rv) rv.textContent = 'TL 0,00';
+  }
+
+  function recalc() {
+    const salaryInput = document.getElementById('salary-overtime');
+    const hoursInput = document.getElementById('hours-overtime');
+    const salaryLabel = document.getElementById('salary-overtime-label');
+    const grossNote = document.getElementById('salary-overtime-gross-note');
+    const convertNote = document.getElementById('convert-note-overtime');
+
+    const mode = currentMode();
+    const raw = parseFloat(salaryInput.value) || 0;
+    const hours = parseFloat(hoursInput.value) || 0;
+
+    // Etiket ve not görünürlüğü
+    salaryLabel.textContent = mode === 'net'
+      ? 'Aylık Net Maaş (elime geçen) (TL)'
+      : 'Aylık Brüt Maaş (TL)';
+    convertNote.style.display = mode === 'net' ? 'block' : 'none';
+
+    if (raw <= 0 || hours <= 0) {
+      grossNote.textContent = '';
+      resetDisplay();
       return;
     }
 
-    // Saatlik ucret = aylik / 225
-    const hourlyRate = gross / 225;
+    // Net girildiyse önce tahmini brüte çevir (mevzuat brüt üzerinden hesaplar)
+    let grossSalary = raw;
+    if (mode === 'net') {
+      grossSalary = calculateGrossFromNet(raw).gross;
+      grossNote.textContent = `Tahmini aylık brüt: ${fmt(grossSalary)} TL`;
+    } else {
+      grossNote.textContent = '';
+    }
 
-    // Brut fazla mesai = saatlik × saat × 1.5
-    const grossAmount = hourlyRate * hours * 1.5;
+    const r = calculateOvertime(grossSalary, hours);
 
-    // Damga vergisi = brut × %0.759
-    const stampTax = grossAmount * 0.00759;
+    document.getElementById('hourly-rate').textContent = `TL ${fmt(r.hourlyRate)}`;
+    document.getElementById('gross-amount').textContent = `TL ${fmt(r.grossAmount)}`;
+    document.getElementById('stamp-amount').textContent = `-TL ${fmt(r.stampTax)}`;
+    document.getElementById('net-amount').textContent = `TL ${fmt(r.netAmount)}`;
 
-    // Net = brut - damga
-    const netAmount = Math.max(0, grossAmount - stampTax);
-
-    // Format
-    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-
-    document.getElementById('hourly-rate').textContent = `TL ${fmt(hourlyRate)}`;
-    document.getElementById('gross-amount').textContent = `TL ${fmt(grossAmount)}`;
-    document.getElementById('stamp-amount').textContent = `-TL ${fmt(stampTax)}`;
-    document.getElementById('net-amount').textContent = `TL ${fmt(netAmount)}`;
-
-    // Calculator bileşenini güncelle
-    const resultValue = document.getElementById('result-value');
-    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
+    const rv = document.getElementById('result-value');
+    if (rv) rv.textContent = `TL ${fmt(r.netAmount)}`;
   }
 
-  document.getElementById('gross-overtime').addEventListener('input', calculateOvertime);
-  document.getElementById('hours-overtime').addEventListener('input', calculateOvertime);
+  function init() {
+    const salaryInput = document.getElementById('salary-overtime');
+    const hoursInput = document.getElementById('hours-overtime');
+    if (!salaryInput || !hoursInput) {
+      console.error('Fazla mesai: input elemanlari bulunamadi');
+      return;
+    }
+    salaryInput.addEventListener('input', recalc);
+    hoursInput.addEventListener('input', recalc);
+    document.querySelectorAll('input[name="mode-overtime"]').forEach((el) => {
+      el.addEventListener('change', recalc);
+    });
+    recalc();
+  }
 
-  // Initial calculation
-  calculateOvertime();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 </script>
 
 <style>
@@ -169,5 +272,43 @@ const relatedTools = [
     color: #1f2937;
     font-size: 1rem;
     margin-bottom: 0.5rem;
+  }
+
+  .salary-mode {
+    display: flex;
+    gap: 0.5rem 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .mode-opt {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 400;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+    cursor: pointer;
+    color: #1f2937;
+    min-height: 44px;
+  }
+
+  .mode-opt input {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+  }
+
+  .field-note {
+    display: block;
+    margin-top: 0.35rem;
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+
+  .convert-note {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+    font-style: italic;
   }
 </style>

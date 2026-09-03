@@ -10,7 +10,37 @@ export interface Props {
 }
 
 const { title, description, children, resultLabel, resultValue } = Astro.props;
+
+// Bu sayfanın kanonik adresi (WebApplication şeması için)
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+// Hesaplayıcı için WebApplication yapılandırılmış verisi (schema.org)
+const webAppSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: title,
+  description,
+  url: canonicalURL.href,
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "All",
+  browserRequirements: "Requires JavaScript",
+  inLanguage: "tr-TR",
+  isAccessibleForFree: true,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "TRY",
+  },
+  provider: {
+    "@type": "Organization",
+    name: "Mesai Defterim",
+    url: "https://mesaidefterim.com",
+  },
+};
 ---
+
+<script type="application/ld+json" set:html={JSON.stringify(webAppSchema)} />
+
 
 <section class="calculator">
   <div class="calculator-container">

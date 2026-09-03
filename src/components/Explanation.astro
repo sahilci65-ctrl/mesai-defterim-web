@@ -1,0 +1,90 @@
+---
+// "Nasıl hesaplanır?" açıklama katmanı — hesaplayıcı ile SSS arasında durur.
+// İçerik her sayfaya özgüdür; bileşen yalnızca ortak kabuk ve stili sağlar.
+export interface Props {
+  title?: string;
+}
+
+const { title = "Nasıl hesaplanır?" } = Astro.props;
+---
+
+<section class="how">
+  <div class="how-container">
+    <h2 class="how-title">{title}</h2>
+    <div class="how-body">
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .how {
+    padding: var(--space-2xl) var(--space-md);
+    background-color: var(--color-background);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .how-container {
+    max-width: 1024px;
+    margin: 0 auto;
+  }
+
+  .how-title {
+    font-size: var(--font-size-3xl);
+    color: var(--color-primary);
+    margin-bottom: var(--space-lg);
+  }
+
+  .how-body :global(p) {
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--space-md);
+  }
+
+  .how-body :global(ul) {
+    margin: 0 0 var(--space-md);
+    padding-left: var(--space-lg);
+  }
+
+  .how-body :global(li) {
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--space-sm);
+  }
+
+  .how-body :global(strong) {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  /* Örnek kutusu — yeşil vurgulu */
+  .how-body :global(.example) {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-success);
+    border-radius: 8px;
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+  }
+
+  .how-body :global(.example p) {
+    margin-bottom: var(--space-sm);
+  }
+
+  .how-body :global(.example p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .how-body :global(.example .result) {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-success);
+  }
+
+  @media (max-width: 768px) {
+    .how-title {
+      font-size: var(--font-size-2xl);
+    }
+  }
+</style>
