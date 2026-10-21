@@ -7,18 +7,22 @@ import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
 import {
+  YEAR,
   MINIMUM_WAGE,
   SGK_RATES,
   TAX_BRACKETS,
   STAMP_TAX_RATE,
 } from '../constants/parameters';
 import { formatTL, formatInt, formatPercent } from '../utils/format';
+import { calculateNetFromGross } from '../utils/calc-web';
 
 // 2026 parametreleri (tek kaynak: constants/parameters.ts)
-const minWageStr = formatInt(MINIMUM_WAGE); // "16.500"
-const sgkYuzde = formatPercent(SGK_RATES.total, 0); // "15"
+const minWageStr = formatInt(MINIMUM_WAGE);
+const sgkYuzde = formatPercent(SGK_RATES.employee, 0); // "14"
+const issizlikYuzde = formatPercent(SGK_RATES.unemployment, 0); // "1"
 const damgaYuzde = formatPercent(STAMP_TAX_RATE); // "0,759"
 const ilkDilimYuzde = formatPercent(TAX_BRACKETS[0].rate, 0); // "15"
+const asgariNet = calculateNetFromGross(MINIMUM_WAGE).net;
 
 // Vergi dilimleri açıklaması — doğrudan parametrelerden üretilir
 const dilimAcik = TAX_BRACKETS.map((b, i) => {
@@ -30,34 +34,32 @@ const dilimAcik = TAX_BRACKETS.map((b, i) => {
   return `${altStr} - ${formatInt(b.limit)} TL arası yüzde ${oran}`;
 }).join('; ');
 
-// Açıklama için örnek hesap: 30.000 TL brüt (sayfadaki hesaplayıcıyla aynı mantık)
-const ornBrut = 30000;
-const ornSgk = ornBrut > MINIMUM_WAGE ? (ornBrut - MINIMUM_WAGE) * SGK_RATES.total : 0;
-const ornMatrah = ornBrut - ornSgk;
-const ornVergi = ornMatrah * TAX_BRACKETS[0].rate; // matrah ilk dilimde
-const ornDamga = ornBrut * STAMP_TAX_RATE;
-const ornNet = ornBrut - ornSgk - ornVergi - ornDamga;
+// Açıklama için örnek hesap — hesaplayıcının kullandığı fonksiyonun kendisi
+const ornBrut = 45000;
+const orn = calculateNetFromGross(ornBrut);
+const ornMatrah = ornBrut * (1 - SGK_RATES.employee - SGK_RATES.unemployment);
+const asgariMatrah = MINIMUM_WAGE * (1 - SGK_RATES.employee - SGK_RATES.unemployment);
 
 const faqItems = [
   {
     question: "Brüt ve net maaş farkı nedir?",
-    answer: `Brüt maaş, kesintiler yapılmadan önceki toplam maaşınızdır. Net maaş ise SGK işçi payı (yüzde ${sgkYuzde}), gelir vergisi ve damga vergisi (yüzde ${damgaYuzde}) kesildikten sonra elinize geçen tutardır.`,
+    answer: `Brüt maaş, kesintiler yapılmadan önceki toplam maaşındır. Net maaş ise SGK işçi payı (yüzde ${sgkYuzde}), işsizlik sigortası (yüzde ${issizlikYuzde}), gelir vergisi ve damga vergisi (yüzde ${damgaYuzde}) kesildikten sonra eline geçen tutardır.`,
   },
   {
     question: "Asgari ücret istisnası nedir?",
-    answer: `Asgari ücrete kadar olan kısım kesinti/istisna kapsamındadır. Bu hesaplayıcıda asgari ücret ${minWageStr} TL alınır; bu tutara kadarki kısım için SGK kesintisi uygulanmaz, aşan kısım üzerinden hesap yapılır.`,
+    answer: `${YEAR} brüt asgari ücreti ${minWageStr} TL'dir. Asgari ücrete isabet eden kısım gelir vergisi ve damga vergisinden muaftır; SGK ve işsizlik primi ise brütün tamamından kesilir. Bu yüzden asgari ücretlinin neti ${formatTL(asgariNet)} TL olur; daha yüksek maaşlarda vergi yalnızca asgari ücreti aşan kısım için hesaplanır.`,
   },
   {
-    question: "2026 gelir vergisi dilimleri nelerdir?",
-    answer: `2026 gelir vergisi dilimleri: ${dilimAcik}. Vergi, kümülatif matraha göre dilim dilim uygulanır.`,
+    question: `${YEAR} gelir vergisi dilimleri nelerdir?`,
+    answer: `${YEAR} gelir vergisi dilimleri: ${dilimAcik}. Gerçek bordroda vergi, yıl içinde biriken (kümülatif) matraha göre dilim dilim uygulanır. Bu hesaplayıcı ise sade bir tahmin için ilk dilimi (yüzde ${ilkDilimYuzde}) esas alır.`,
   },
   {
     question: "Brüt artınca net neden daha az artıyor?",
-    answer: "Brüt arttığında hem SGK primi hem de gelir vergisi artar; ayrıca gelir bir üst vergi dilimine geçebilir. Bu nedenle brüt maaştaki artışın tamamı nete yansımaz.",
+    answer: "Brüt arttığında SGK primi, işsizlik primi, gelir vergisi ve damga vergisi de artar. Ayrıca yıl ilerledikçe kümülatif matrah üst vergi dilimine geçebilir. Bu nedenle brüt maaştaki artışın tamamı nete yansımaz.",
   },
   {
     question: "Sonuç kesin mi?",
-    answer: "Hayır, tahminidir. Gerçek bordro; yıl içinde biriken kümülatif vergi matrahı, asgari ücret gelir vergisi istisnası ve iş yerine özgü kesintilerle muhasebe tarafından hesaplanır. Bu araç, kümülatif matrahı basitleştirerek yaklaşık bir sonuç verir.",
+    answer: "Hayır, tahminidir. Gerçek bordro; yıl içinde biriken kümülatif vergi matrahı, üst vergi dilimleri ve iş yerine özgü kesintilerle muhasebe tarafından hesaplanır. Özellikle yılın son aylarında ve yüksek maaşlarda gerçek net, bu tahminden düşük çıkabilir.",
   },
 ];
 
@@ -128,7 +130,7 @@ const relatedTools = [
           <strong id="display-gross">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
-          <span>SGK Kesintisi:</span>
+          <span>SGK + İşsizlik Kesintisi:</span>
           <strong id="display-sgk">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
@@ -136,7 +138,7 @@ const relatedTools = [
           <strong id="display-tax">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
-          <span>Damga Vergisi (yüzde 0,759):</span>
+          <span>Damga Vergisi:</span>
           <strong id="display-stamp">-TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
@@ -149,25 +151,25 @@ const relatedTools = [
 
   <Explanation>
     <p>
-      Net maaş, brüt maaştan üç kalemin düşülmesiyle bulunur. Hesaplayıcı bunu
+      Net maaş, brüt maaştan dört kalemin düşülmesiyle bulunur. Hesaplayıcı bunu
       hem brütten nete hem de netten brüte doğru yapar. Kesintiler:
     </p>
     <ul>
-      <li><strong>SGK işçi payı (yüzde {sgkYuzde}):</strong> Asgari ücrete ({minWageStr} TL) isabet eden kısım istisna tutularak, aşan tutar üzerinden hesaplanır.</li>
-      <li><strong>Gelir vergisi:</strong> SGK sonrası kalan matraha, dilimlere göre uygulanır (ilk dilim yüzde {ilkDilimYuzde}).</li>
-      <li><strong>Damga vergisi (yüzde {damgaYuzde}):</strong> Brüt maaş üzerinden alınır.</li>
+      <li><strong>SGK işçi payı (yüzde {sgkYuzde}) ve işsizlik sigortası (yüzde {issizlikYuzde}):</strong> Brüt maaşın tamamı üzerinden kesilir.</li>
+      <li><strong>Gelir vergisi (yüzde {ilkDilimYuzde}):</strong> SGK sonrası kalan matrahtan asgari ücretin matrahı ({formatTL(asgariMatrah)} TL) düşülür; vergi kalan kısma uygulanır.</li>
+      <li><strong>Damga vergisi (yüzde {damgaYuzde}):</strong> Brüt maaşın asgari ücreti ({minWageStr} TL) aşan kısmından alınır.</li>
     </ul>
     <div class="example">
       <p><strong>Örnek:</strong> Aylık {formatInt(ornBrut)} TL brüt maaş.</p>
-      <p>SGK = ({formatInt(ornBrut)} − {minWageStr}) × yüzde {sgkYuzde} = {formatTL(ornSgk)} TL.</p>
-      <p>Gelir vergisi = {formatTL(ornMatrah)} × yüzde {ilkDilimYuzde} = {formatTL(ornVergi)} TL.</p>
-      <p>Damga vergisi = {formatInt(ornBrut)} × yüzde {damgaYuzde} = {formatTL(ornDamga)} TL.</p>
-      <p class="result">Net maaş ≈ {formatTL(ornNet)} TL.</p>
+      <p>SGK + işsizlik = {formatInt(ornBrut)} × yüzde {formatPercent(SGK_RATES.employee + SGK_RATES.unemployment, 0)} = {formatTL(orn.sgkDeduction)} TL.</p>
+      <p>Gelir vergisi = ({formatTL(ornMatrah)} − {formatTL(asgariMatrah)}) × yüzde {ilkDilimYuzde} = {formatTL(orn.incomeTax)} TL.</p>
+      <p>Damga vergisi = ({formatInt(ornBrut)} − {minWageStr}) × yüzde {damgaYuzde} = {formatTL(orn.stampTax)} TL.</p>
+      <p class="result">Net maaş ≈ {formatTL(orn.net)} TL.</p>
     </div>
     <p>
       Not: Gerçek bordroda vergi, yıl boyunca biriken <strong>kümülatif matraha</strong>
-      göre arttığı için aylar ilerledikçe net maaş bir miktar düşebilir. Bu araç
-      kümülatif matrahı basitleştirdiğinden sonuç yaklaşıktır.
+      göre üst dilimlere geçtiği için aylar ilerledikçe net maaş bir miktar düşebilir.
+      Bu araç ilk dilimi esas alarak kümülatif matrahı basitleştirdiğinden sonuç yaklaşıktır.
     </p>
   </Explanation>
 
@@ -181,87 +183,12 @@ const relatedTools = [
 </BaseLayout>
 
 <script>
-  const TAX_BRACKETS = [
-    { limit: 95000, rate: 0.15 },
-    { limit: 540000, rate: 0.2 },
-    { limit: 1800000, rate: 0.27 },
-    { limit: Infinity, rate: 0.35 },
-  ];
+  // Hesap mantığı tek kaynakta: utils/calc-web.ts (mobil uygulamayla birebir).
+  // Asgari ücret ve oranlar constants/parameters.ts'ten gelir.
+  import { calculateNetFromGross, calculateGrossFromNet } from '../utils/calc-web';
 
-  const SGK_RATE = 0.15;
-  const STAMP_TAX_RATE = 0.00759;
-  const MINIMUM_WAGE = 16500;
-
-  function calculateIncomeTax(grossIncome) {
-    const sgkDeduction = calculateSGKDeduction(grossIncome);
-    const taxableIncome = grossIncome - sgkDeduction;
-
-    if (taxableIncome <= 0) return 0;
-
-    let tax = 0;
-    let previousLimit = 0;
-
-    for (const bracket of TAX_BRACKETS) {
-      if (taxableIncome <= previousLimit) break;
-
-      const incomeInBracket = Math.min(taxableIncome, bracket.limit) - previousLimit;
-      tax += incomeInBracket * bracket.rate;
-      previousLimit = bracket.limit;
-    }
-
-    return Math.round(tax * 100) / 100;
-  }
-
-  function calculateSGKDeduction(grossIncome) {
-    if (grossIncome <= MINIMUM_WAGE) {
-      return 0;
-    }
-
-    const sgkBase = grossIncome - MINIMUM_WAGE;
-    return Math.round(sgkBase * SGK_RATE * 100) / 100;
-  }
-
-  function calculateNetFromGross(gross) {
-    const sgkDeduction = calculateSGKDeduction(gross);
-    const incomeTax = calculateIncomeTax(gross);
-    const stampTax = Math.round(gross * STAMP_TAX_RATE * 100) / 100;
-    const net = Math.round((gross - sgkDeduction - incomeTax - stampTax) * 100) / 100;
-
-    return {
-      gross: Math.round(gross * 100) / 100,
-      sgkDeduction,
-      incomeTax,
-      stampTax,
-      net: Math.max(net, 0),
-    };
-  }
-
-  function calculateGrossFromNet(net) {
-    let low = net;
-    let high = net * 2;
-    let gross = net;
-
-    for (let i = 0; i < 50; i++) {
-      gross = (low + high) / 2;
-      const result = calculateNetFromGross(gross);
-
-      if (Math.abs(result.net - net) < 0.01) {
-        break;
-      }
-
-      if (result.net < net) {
-        low = gross;
-      } else {
-        high = gross;
-      }
-    }
-
-    return calculateNetFromGross(gross);
-  }
-
-  function fmt(n) {
-    return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-  }
+  const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  const EMPTY = { gross: 0, sgkDeduction: 0, incomeTax: 0, stampTax: 0, net: 0 };
 
   function displayResult(result) {
     document.getElementById('display-gross').textContent = `TL ${fmt(result.gross)}`;
@@ -270,60 +197,42 @@ const relatedTools = [
     document.getElementById('display-stamp').textContent = `-TL ${fmt(result.stampTax)}`;
     document.getElementById('display-net').textContent = `TL ${fmt(result.net)}`;
 
-    // Calculator bileşenini güncelle
     const resultValue = document.getElementById('result-value');
     if (resultValue) resultValue.textContent = `TL ${fmt(result.net)}`;
   }
 
   function calculateFromGross() {
     const gross = parseFloat(document.getElementById('gross-netbrut').value) || 0;
-
-    if (gross < 0) {
-      displayResult({ gross: 0, sgkDeduction: 0, incomeTax: 0, stampTax: 0, net: 0 });
+    if (gross <= 0) {
+      displayResult(EMPTY);
       return;
     }
-
     const result = calculateNetFromGross(gross);
     displayResult(result);
-
-    // Net inputu güncelle (sync)
     document.getElementById('net-netbrut').value = result.net;
   }
 
   function calculateFromNet() {
     const net = parseFloat(document.getElementById('net-netbrut').value) || 0;
-
-    if (net < 0) {
-      displayResult({ gross: 0, sgkDeduction: 0, incomeTax: 0, stampTax: 0, net: 0 });
-      return;
-    }
-
-    if (net === 0) {
-      displayResult({ gross: 0, sgkDeduction: 0, incomeTax: 0, stampTax: 0, net: 0 });
+    if (net <= 0) {
+      displayResult(EMPTY);
       document.getElementById('gross-netbrut').value = 0;
       return;
     }
-
     const result = calculateGrossFromNet(net);
     displayResult(result);
-
-    // Brüt inputu güncelle (sync)
     document.getElementById('gross-netbrut').value = result.gross;
   }
 
   function init() {
     const grossInput = document.getElementById('gross-netbrut');
     const netInput = document.getElementById('net-netbrut');
-
     if (!grossInput || !netInput) {
       console.error('Net-brut: input elemanlari bulunamadi');
       return;
     }
-
     grossInput.addEventListener('input', calculateFromGross);
     netInput.addEventListener('input', calculateFromNet);
-
-    // Initial calculation
     calculateFromGross();
   }
 

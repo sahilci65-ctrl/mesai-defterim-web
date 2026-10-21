@@ -11,8 +11,14 @@ import {
   OVERTIME_MULTIPLIER,
   WORKING_DAYS_PER_MONTH,
   DAYS_PER_MONTH_CALCULATION,
+  DAYS_PER_WEEK,
   MINIMUM_WAGE,
 } from '../constants/parameters';
+
+// Kurus hassasiyetine yuvarlama (mobil calc.ts yuvarla ile ayni)
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 /**
  * MOBIL UYGULAMAYLA AYNI MODEL (Mesai-Defterim/src/services/calc.ts).
@@ -26,20 +32,9 @@ import {
  * - Damga vergisi asgari ucreti asan kisma uygulanir.
  */
 
-// SGK kesintisi (isci payi): tam brut uzerinden %15
-function calculateSGKDeduction(grossIncome: number): number {
-  return Math.round(grossIncome * SGK_RATES.total * 100) / 100;
-}
-
-// Gelir vergisi: tek dilim, asgari ucret istisnali
-function calculateIncomeTax(grossIncome: number): number {
-  const taxableIncome = grossIncome - calculateSGKDeduction(grossIncome);
-  const exemptBase = MINIMUM_WAGE * (1 - SGK_RATES.total);
-  const tax = Math.max(0, (taxableIncome - exemptBase) * TAX_BRACKETS[0]!.rate);
-  return Math.round(tax * 100) / 100;
-}
-
-// Brüt maaştan net maaş hesapla
+// Brüt maaştan net maaş hesapla — mobil bruttenNete ile BIREBIR ayni islem
+// sirasi: ara degerler yuvarlanmaz, yalniz ciktilar yuvarlanir. (Eskiden SGK
+// vergiden once yuvarlaniyordu; bu mobil ile kurusluk ayrisma yaratiyordu.)
 export function calculateNetFromGross(
   grossIncome: number
 ): {
@@ -49,19 +44,25 @@ export function calculateNetFromGross(
   stampTax: number;
   net: number;
 } {
-  const sgkDeduction = calculateSGKDeduction(grossIncome);
-  const incomeTax = calculateIncomeTax(grossIncome);
+  // SGK isci payi %14 + issizlik %1, tam brut uzerinden
+  const sgk = grossIncome * SGK_RATES.employee;
+  const unemployment = grossIncome * SGK_RATES.unemployment;
+  const taxableIncome = grossIncome - sgk - unemployment;
 
-  // Damga vergisi: asgari ücreti aşan kısma (mobil ile aynı)
-  const stampTax = Math.round(Math.max(0, grossIncome - MINIMUM_WAGE) * STAMP_TAX_RATE * 100) / 100;
+  // Gelir vergisi: tek dilim, asgari ucret matrahi istisna
+  const exemptBase = MINIMUM_WAGE * (1 - SGK_RATES.employee - SGK_RATES.unemployment);
+  const incomeTax = Math.max(0, (taxableIncome - exemptBase) * TAX_BRACKETS[0]!.rate);
 
-  const net = Math.round((grossIncome - sgkDeduction - incomeTax - stampTax) * 100) / 100;
+  // Damga vergisi: asgari ücreti aşan kısma
+  const stampTax = Math.max(0, (grossIncome - MINIMUM_WAGE) * STAMP_TAX_RATE);
+
+  const net = round2(grossIncome - sgk - unemployment - incomeTax - stampTax);
 
   return {
-    gross: Math.round(grossIncome * 100) / 100,
-    sgkDeduction: Math.round(sgkDeduction * 100) / 100,
-    incomeTax: Math.round(incomeTax * 100) / 100,
-    stampTax: Math.round(stampTax * 100) / 100,
+    gross: round2(grossIncome),
+    sgkDeduction: round2(sgk + unemployment),
+    incomeTax: round2(incomeTax),
+    stampTax: round2(stampTax),
     net: Math.max(net, 0), // Net negatif olamaz
   };
 }
@@ -151,42 +152,42 @@ export function calculateSeverance(
   };
 }
 
-// İhbar tazminatı hesapla
+// Kıdem yılına göre ihbar süresi (İş K. m.17)
+export function noticeWeeksForYears(senioryYears: number): number {
+  if (senioryYears < 0.5) return NOTICE_PERIODS.lessThan6Months;
+  if (senioryYears < 1.5) return NOTICE_PERIODS.sixMonthsTo18Months;
+  if (senioryYears < 3) return NOTICE_PERIODS.eighteenMonthsTo3Years;
+  return NOTICE_PERIODS.threeYearsPlus;
+}
+
+// İhbar tazminatı hesapla — MOBIL ile ayni model (calc.ts ihbarTazminati):
+// brüt = aylık brüt / 30 × 7 × hafta; gelir vergisi (%15) + damga kesilir, SGK kesilmez.
+// Ara degerler yuvarlanmaz (mobil gibi), yalniz cikti yuvarlanir.
 export function calculateNoticeSeverance(
   monthlyGrossIncome: number,
   senioryYears: number
 ): {
   noticeWeeks: number;
+  weeklyRate: number;
   noticeAmount: number;
+  incomeTax: number;
   stampTax: number;
   netAmount: number;
 } {
-  // Kıdem yılına göre ihbar süresi
-  let noticeWeeks = NOTICE_PERIODS.lessThan6Months;
-  if (senioryYears >= 3) {
-    noticeWeeks = NOTICE_PERIODS.threeYearsPlus;
-  } else if (senioryYears >= 1) {
-    noticeWeeks = NOTICE_PERIODS.yearToThreeYears;
-  } else if (senioryYears >= 0.5) {
-    noticeWeeks = NOTICE_PERIODS.sixMonthsToYear;
-  }
+  const noticeWeeks = noticeWeeksForYears(senioryYears);
 
-  // İhbar tazminatı = haftalık ücret × hafta sayısı
-  // Haftalık = aylık / 4.33
-  const weeklyIncome = monthlyGrossIncome / 4.33;
-  const noticeAmount = Math.round(weeklyIncome * noticeWeeks * 100) / 100;
-
-  // Damga vergisi
-  const stampTax = Math.round(noticeAmount * STAMP_TAX_RATE * 100) / 100;
-
-  // Net
-  const netAmount = Math.round((noticeAmount - stampTax) * 100) / 100;
+  const weeklyExact = (monthlyGrossIncome / DAYS_PER_MONTH_CALCULATION) * DAYS_PER_WEEK;
+  const grossExact = weeklyExact * noticeWeeks;
+  const taxExact = grossExact * TAX_BRACKETS[0]!.rate;
+  const stampExact = grossExact * STAMP_TAX_RATE;
 
   return {
     noticeWeeks,
-    noticeAmount,
-    stampTax,
-    netAmount,
+    weeklyRate: round2(weeklyExact),
+    noticeAmount: round2(grossExact),
+    incomeTax: round2(taxExact),
+    stampTax: round2(stampExact),
+    netAmount: round2(grossExact - taxExact - stampExact),
   };
 }
 
@@ -252,6 +253,17 @@ export function calculatePublicHolidayWork(
     stampTax,
     netAmount,
   };
+}
+
+// Ek ödemenin (fazla mesai, resmi tatil) tam kesintilerle yaklaşık neti.
+// Mobil özet ekranı "yaklaşık net" satırını bruttenNete(maaş + ilaveler) ile
+// gösterir; web yalnız ilaveyi hesapladığı için aynı modelle ilavenin nete
+// katkısını verir: net(maaş + ilave) − net(maaş).
+export function calculateExtraPayNet(monthlyGrossIncome: number, extraGross: number): number {
+  if (extraGross <= 0) return 0;
+  const withExtra = calculateNetFromGross(monthlyGrossIncome + extraGross).net;
+  const without = calculateNetFromGross(monthlyGrossIncome).net;
+  return round2(withExtra - without);
 }
 
 // Format para (₺ cinsinden)

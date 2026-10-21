@@ -22,6 +22,7 @@ export const SGK_RATES = {
   pension: 0.09,      // %9 emekli sandığı
   health: 0.05,       // %5 sağlık
   unemployment: 0.01, // %1 işsizlik
+  employee: 0.14,     // %14 SGK işçi payı (emeklilik + sağlık) — mobil SGK_ISCI_ORANI
   total: 0.15,        // Toplam %15 (ancak hesaplama sırasında kontrol edilir)
 };
 
@@ -57,13 +58,17 @@ export function getSeveranceCeiling(exitDate?: string): number {
 // Kıdem tazminatı hesaplanırken kullanılan gün sayısı
 export const SEVERANCE_DAYS_PER_YEAR = 30;
 
-// İhbar süresi kuralları (hafta cinsinden, kıdem yılı şartına göre)
+// İhbar süreleri (İş Kanunu m.17) — kıdem yılına göre hafta
+// Mobil: calc.ts ihbarSuresiHafta (<6 ay 2, 6-18 ay 4, 18-36 ay 6, 36+ ay 8)
 export const NOTICE_PERIODS = {
-  lessThan6Months: 2,   // 6 ay altı: 2 hafta
-  sixMonthsToYear: 2,   // 6 ay - 1 yıl: 2 hafta
-  yearToThreeYears: 4,  // 1-3 yıl: 4 hafta
-  threeYearsPlus: 8,    // 3 yıl+: 8 hafta
+  lessThan6Months: 2,        // 6 aydan az: 2 hafta
+  sixMonthsTo18Months: 4,    // 6 ay - 1,5 yıl: 4 hafta
+  eighteenMonthsTo3Years: 6, // 1,5 - 3 yıl: 6 hafta
+  threeYearsPlus: 8,         // 3 yıl ve üzeri: 8 hafta
 };
+
+// İhbar tazminatında haftalık ücret = aylık brüt / 30 × 7 (mobil ile aynı)
+export const DAYS_PER_WEEK = 7;
 
 // Fazla mesai çarpanı (İş Kanunu m.41)
 export const OVERTIME_MULTIPLIER = 1.5;

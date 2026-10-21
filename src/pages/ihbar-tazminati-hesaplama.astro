@@ -6,32 +6,33 @@ import FAQ from '../components/FAQ.astro';
 import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
-import { STAMP_TAX_RATE } from '../constants/parameters';
+import {
+  STAMP_TAX_RATE,
+  TAX_BRACKETS,
+  NOTICE_PERIODS,
+  DAYS_PER_MONTH_CALCULATION,
+  DAYS_PER_WEEK,
+} from '../constants/parameters';
 import { formatTL, formatInt, formatPercent } from '../utils/format';
+import { calculateNoticeSeverance } from '../utils/calc-web';
 
 // 2026 parametreleri (tek kaynak: constants/parameters.ts)
 const damgaYuzde = formatPercent(STAMP_TAX_RATE); // "0,759"
+const gvYuzde = formatPercent(TAX_BRACKETS[0].rate, 0); // "15"
+const gunBolen = formatInt(DAYS_PER_MONTH_CALCULATION); // "30"
 
-// Haftalık ücret böleni (aylık ortalama hafta sayısı) — hesaplayıcıyla aynı
-const HAFTA_BOLEN = 4.33;
-const haftaBolenStr = HAFTA_BOLEN.toLocaleString('tr-TR'); // "4,33"
-
-// İhbar süresi kademeleri (İş Kanunu m.17) — hesaplayıcıyla birebir aynı
+// İhbar süresi kademeleri (İş Kanunu m.17) — hesaplayıcının kullandığı sabitler
 const kademeler = [
-  { sure: "6 aydan az", hafta: 2 },
-  { sure: "6 ay - 1,5 yıl", hafta: 4 },
-  { sure: "1,5 - 3 yıl", hafta: 6 },
-  { sure: "3 yıldan fazla", hafta: 8 },
+  { sure: "6 aydan az", hafta: NOTICE_PERIODS.lessThan6Months },
+  { sure: "6 ay - 1,5 yıl", hafta: NOTICE_PERIODS.sixMonthsTo18Months },
+  { sure: "1,5 - 3 yıl", hafta: NOTICE_PERIODS.eighteenMonthsTo3Years },
+  { sure: "3 yıl ve üzeri", hafta: NOTICE_PERIODS.threeYearsPlus },
 ];
 
-// Açıklama için örnek hesap: 45.000 TL, 5 yıl kıdem -> 8 hafta
+// Açıklama için örnek hesap — hesaplayıcının kullandığı fonksiyonun kendisi
 const ornMaas = 45000;
 const ornYil = 5;
-const ornHafta = 8;
-const ornHaftalik = ornMaas / HAFTA_BOLEN;
-const ornBrut = ornHaftalik * ornHafta;
-const ornDamga = ornBrut * STAMP_TAX_RATE;
-const ornNet = ornBrut - ornDamga;
+const orn = calculateNoticeSeverance(ornMaas, ornYil);
 
 const faqItems = [
   {
@@ -40,15 +41,15 @@ const faqItems = [
   },
   {
     question: "İhbar süresi kıdeme göre kaç haftadır?",
-    answer: `İş Kanunu m.17'ye göre: ${kademeler.map((k) => `${k.sure} = ${k.hafta} hafta`).join('; ')}. Örneğin ${ornYil} yıl kıdem = ${ornHafta} hafta ihbar süresine karşılık gelir.`,
+    answer: `İş Kanunu m.17'ye göre: ${kademeler.map((k) => `${k.sure} = ${k.hafta} hafta`).join('; ')}. Örneğin ${ornYil} yıl kıdem = ${orn.noticeWeeks} hafta ihbar süresine karşılık gelir.`,
   },
   {
     question: "Haftalık ücret nasıl hesaplanır?",
-    answer: `Haftalık ücret = aylık brüt / ${haftaBolenStr}. Örneğin ${formatInt(ornMaas)} TL aylık brüt için haftalık ücret = ${formatInt(ornMaas)} / ${haftaBolenStr} = ${formatTL(ornHaftalik)} TL olur.`,
+    answer: `Önce günlük brüt ücret bulunur (aylık brüt / ${gunBolen}), sonra 7 ile çarpılır. Örneğin ${formatInt(ornMaas)} TL aylık brüt için haftalık ücret = ${formatInt(ornMaas)} / ${gunBolen} × ${DAYS_PER_WEEK} = ${formatTL(orn.weeklyRate)} TL olur.`,
   },
   {
     question: "İhbar tazminatından ne kadar kesinti yapılır?",
-    answer: `İhbar tazminatının brüt tutarından yüzde ${damgaYuzde} oranında damga vergisi kesilir. Kıdem tazminatından farklı olarak, ihbar tazminatı gelir vergisine tabidir; bu hesaplayıcı yalnızca damga vergisini düşen basitleştirilmiş bir sonuç verir.`,
+    answer: `Kıdem tazminatından farklı olarak ihbar tazminatı gelir vergisine tabidir. Brüt tutardan gelir vergisi (hesaplayıcıda yüzde ${gvYuzde} varsayılır) ve yüzde ${damgaYuzde} damga vergisi kesilir; SGK primi kesilmez. Yıl içindeki kümülatif matrahın üst dilime geçmişse gerçek gelir vergisi daha yüksek olabilir.`,
   },
   {
     question: "İhbar süresi vermek zorunlu mu?",
@@ -136,6 +137,10 @@ const relatedTools = [
           <strong id="gross-notice-amount">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
+          <span>Gelir Vergisi:</span>
+          <strong id="tax-notice">-TL 0,00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
           <span>Damga Vergisi:</span>
           <strong id="stamp-notice">-TL 0,00</strong>
         </div>
@@ -151,10 +156,10 @@ const relatedTools = [
     <p>
       İhbar tazminatı, iş sözleşmesi <strong>ihbar süresine uyulmadan</strong>
       feshedildiğinde ödenir. Tutar, kıdem süresine bağlı ihbar süresi (hafta)
-      ile haftalık ücretin çarpımıdır. Hesap iki adımdan oluşur:
+      ile haftalık ücretin çarpımıdır. Hesap üç adımdan oluşur:
     </p>
     <ul>
-      <li><strong>Haftalık ücret</strong> = aylık brüt maaş / {haftaBolenStr} (bir ayın ortalama hafta sayısı).</li>
+      <li><strong>Haftalık ücret</strong> = aylık brüt maaş / {gunBolen} × {DAYS_PER_WEEK} (7 günlük ücret).</li>
       <li>
         <strong>Brüt ihbar tazminatı</strong> = haftalık ücret × ihbar süresi (hafta).
         İhbar süresi kıdeme göre belirlenir:
@@ -165,16 +170,20 @@ const relatedTools = [
         <li>{k.sure}: <strong>{k.hafta} hafta</strong></li>
       ))}
     </ul>
+    <ul>
+      <li><strong>Net tutar</strong> = brüt tutardan gelir vergisi (yüzde {gvYuzde}) ve damga vergisi (yüzde {damgaYuzde}) düşülür. SGK primi kesilmez.</li>
+    </ul>
     <div class="example">
       <p>
         <strong>Örnek:</strong> {ornYil} yıl kıdemi olan, aylık {formatInt(ornMaas)} TL
-        brüt maaşlı biri. {ornYil} yıl kıdem "3 yıldan fazla" kademesine girdiği için
-        ihbar süresi <strong>{ornHafta} haftadır</strong>.
+        brüt maaşlı biri. {ornYil} yıl kıdem "3 yıl ve üzeri" kademesine girdiği için
+        ihbar süresi <strong>{orn.noticeWeeks} haftadır</strong>.
       </p>
-      <p>Haftalık ücret = {formatInt(ornMaas)} / {haftaBolenStr} = {formatTL(ornHaftalik)} TL.</p>
-      <p>Brüt ihbar tazminatı = {formatTL(ornHaftalik)} × {ornHafta} = {formatTL(ornBrut)} TL.</p>
-      <p>Damga vergisi = {formatTL(ornBrut)} × yüzde {damgaYuzde} = {formatTL(ornDamga)} TL.</p>
-      <p class="result">Net ihbar tazminatı ≈ {formatTL(ornNet)} TL.</p>
+      <p>Haftalık ücret = {formatInt(ornMaas)} / {gunBolen} × {DAYS_PER_WEEK} = {formatTL(orn.weeklyRate)} TL.</p>
+      <p>Brüt ihbar tazminatı = {formatTL(orn.weeklyRate)} × {orn.noticeWeeks} = {formatTL(orn.noticeAmount)} TL.</p>
+      <p>Gelir vergisi = {formatTL(orn.noticeAmount)} × yüzde {gvYuzde} = {formatTL(orn.incomeTax)} TL.</p>
+      <p>Damga vergisi = {formatTL(orn.noticeAmount)} × yüzde {damgaYuzde} = {formatTL(orn.stampTax)} TL.</p>
+      <p class="result">Net ihbar tazminatı ≈ {formatTL(orn.netAmount)} TL.</p>
     </div>
   </Explanation>
 
@@ -188,14 +197,20 @@ const relatedTools = [
 </BaseLayout>
 
 <script>
-  const STAMP_TAX_RATE = 0.00759;
-  const WEEKS_PER_MONTH = 4.33;
+  // Hesap mantığı tek kaynakta: utils/calc-web.ts (mobil ihbarTazminati ile birebir)
+  import { calculateNoticeSeverance } from '../utils/calc-web';
 
-  function getNoticeWeeks(years) {
-    if (years < 0.5) return 2;       // 6 aydan az
-    if (years < 1.5) return 4;       // 6 ay - 1,5 yil
-    if (years < 3) return 6;         // 1,5 - 3 yil
-    return 8;                         // 3 yil+
+  const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+  function resetDisplay() {
+    document.getElementById('notice-weeks').textContent = '0';
+    document.getElementById('weekly-rate').textContent = 'TL 0,00';
+    document.getElementById('gross-notice-amount').textContent = 'TL 0,00';
+    document.getElementById('tax-notice').textContent = '-TL 0,00';
+    document.getElementById('stamp-notice').textContent = '-TL 0,00';
+    document.getElementById('net-notice').textContent = 'TL 0,00';
+    const resultValue = document.getElementById('result-value');
+    if (resultValue) resultValue.textContent = 'TL 0,00';
   }
 
   function calculateNotice() {
@@ -207,41 +222,17 @@ const relatedTools = [
       return;
     }
 
-    // İhbar süresi
-    const noticeWeeks = getNoticeWeeks(years);
+    const r = calculateNoticeSeverance(gross, years);
 
-    // Haftalık ücret = aylık / 4.33
-    const weeklyRate = gross / WEEKS_PER_MONTH;
+    document.getElementById('notice-weeks').textContent = r.noticeWeeks;
+    document.getElementById('weekly-rate').textContent = `TL ${fmt(r.weeklyRate)}`;
+    document.getElementById('gross-notice-amount').textContent = `TL ${fmt(r.noticeAmount)}`;
+    document.getElementById('tax-notice').textContent = `-TL ${fmt(r.incomeTax)}`;
+    document.getElementById('stamp-notice').textContent = `-TL ${fmt(r.stampTax)}`;
+    document.getElementById('net-notice').textContent = `TL ${fmt(r.netAmount)}`;
 
-    // Brüt tazminat = haftalık × hafta
-    const grossAmount = weeklyRate * noticeWeeks;
-
-    // Damga vergisi
-    const stampTax = grossAmount * STAMP_TAX_RATE;
-
-    // Net
-    const netAmount = Math.max(0, grossAmount - stampTax);
-
-    // Format
-    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-
-    document.getElementById('notice-weeks').textContent = noticeWeeks;
-    document.getElementById('weekly-rate').textContent = `TL ${fmt(weeklyRate)}`;
-    document.getElementById('gross-notice-amount').textContent = `TL ${fmt(grossAmount)}`;
-    document.getElementById('stamp-notice').textContent = `-TL ${fmt(stampTax)}`;
-    document.getElementById('net-notice').textContent = `TL ${fmt(netAmount)}`;
-
-    // Calculator bileşenini güncelle
     const resultValue = document.getElementById('result-value');
-    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
-  }
-
-  function resetDisplay() {
-    document.getElementById('notice-weeks').textContent = '0';
-    document.getElementById('weekly-rate').textContent = 'TL 0,00';
-    document.getElementById('gross-notice-amount').textContent = 'TL 0,00';
-    document.getElementById('stamp-notice').textContent = '-TL 0,00';
-    document.getElementById('net-notice').textContent = 'TL 0,00';
+    if (resultValue) resultValue.textContent = `TL ${fmt(r.netAmount)}`;
   }
 
   function init() {
@@ -255,8 +246,6 @@ const relatedTools = [
 
     grossInput.addEventListener('input', calculateNotice);
     yearsInput.addEventListener('input', calculateNotice);
-
-    // Initial calculation
     calculateNotice();
   }
 

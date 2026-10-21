@@ -15,6 +15,7 @@ import {
   STAMP_TAX_RATE,
 } from '../constants/parameters';
 import { formatTL, formatInt, formatPercent } from '../utils/format';
+import { calculateExtraPayNet } from '../utils/calc-web';
 
 // 2026 parametreleri (tek kaynak: constants/parameters.ts)
 const saatBolen = formatInt(WORKING_DAYS_PER_MONTH); // "225"
@@ -27,8 +28,7 @@ const ornekMaas = 30000;
 const ornekSaat = 10;
 const ornekSaatlik = ornekMaas / WORKING_DAYS_PER_MONTH;
 const ornekBrut = ornekSaatlik * ornekSaat * OVERTIME_MULTIPLIER;
-const ornekDamga = ornekBrut * STAMP_TAX_RATE;
-const ornekNet = ornekBrut - ornekDamga;
+const ornekYaklasikNet = calculateExtraPayNet(ornekMaas, ornekBrut);
 
 // SSS — sorular Google'da aranan ifadelerden seçildi (FAQPage şeması FAQ bileşeninde üretilir)
 const asgariSaatlik = MINIMUM_WAGE / WORKING_DAYS_PER_MONTH;
@@ -54,7 +54,7 @@ const faqItems = [
   },
   {
     question: "Fazla mesai ücreti net mi brüt mü hesaplanır?",
-    answer: `Fazla mesai ücreti kanunen brüt üzerinden hesaplanır ve maaşına eklenerek bordroya yazılır. Bu tutardan damga vergisinin yanında SGK primi ve gelir vergisi de kesilir. Yukarıdaki araç brüt tutarı ve yüzde ${damgaYuzde} damga vergisi kesintisini gösterir. Bordrona yansıyacak net tutar, SGK ve gelir vergisi kesintileri nedeniyle (yılın hangi ayında olduğuna ve vergi dilimine göre) daha düşük olabilir.`,
+    answer: `Fazla mesai ücreti kanunen brüt üzerinden hesaplanır ve maaşına eklenerek bordroya yazılır. Bu tutardan damga vergisinin yanında SGK primi ve gelir vergisi de kesilir. Yukarıdaki araç önce alman gereken brüt tutarı, altında da bu kesintilerin tamamı düşülmüş yaklaşık neti gösterir. Yıl içinde kümülatif vergi matrahın üst dilime geçmişse bordrondaki net biraz daha düşük olabilir.`,
   },
   {
     question: "Fazla mesaim ödenmezse ne yapabilirim?",
@@ -96,13 +96,14 @@ const relatedTools = [
 
 <BaseLayout
   title="Fazla Mesai Ücreti Hesaplama 2026 — Ücretsiz Online Araç"
-  description="Aylık net maaşını ve fazla mesai saatini gir; İş Kanunu m.41'e göre 1,5 kat fazla mesai net ücretini 2026 değerleriyle anında, ücretsiz hesapla."
+  description="Aylık net maaşını ve fazla mesai saatini gir; İş Kanunu m.41'e göre 1,5 kat fazla mesai ücretini ve yaklaşık netini 2026 değerleriyle anında hesapla."
 >
   <Calculator
     title="Fazla Mesai Ücreti Hesaplayıcı"
-    description="Aylık net maaşını ve fazla mesai saatini gir, tahmini net ücretini anında öğren."
-    resultLabel="Tahmini Fazla Mesai Net Ücreti:"
+    description="Aylık net maaşını ve fazla mesai saatini gir, alman gereken fazla mesai ücretini anında öğren."
+    resultLabel="Alman Gereken Fazla Mesai Ücreti (brüt):"
     resultValue="TL 0,00"
+    showResultSub
   >
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       <div>
@@ -143,17 +144,13 @@ const relatedTools = [
           <span>Saatlik Ücret (brüt):</span>
           <strong id="hourly-rate">TL 0,00</strong>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Brüt Fazla Mesai:</span>
+        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
+          <span style="font-weight: bold;">Alman Gereken (brüt):</span>
           <strong id="gross-amount">TL 0,00</strong>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
-          <span>Damga Vergisi:</span>
-          <strong id="stamp-amount">-TL 0,00</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
-          <span style="font-weight: bold;">Net Fazla Mesai Ücreti:</span>
-          <strong id="net-amount">TL 0,00</strong>
+        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; color: #6b7280; font-size: 0.9rem;">
+          <span>Yaklaşık net (tüm kesintiler sonrası):</span>
+          <span id="approx-net-amount" style="white-space: nowrap; margin-left: 0.5rem;">TL 0,00</span>
         </div>
       </div>
 
@@ -173,12 +170,11 @@ const relatedTools = [
         ({saatBolen} sayısı, 30 gün × 7,5 saatlik standart aylık çalışma süresidir.)
       </li>
       <li><strong>Brüt fazla mesai</strong> = saatlik ücret × fazla mesai saati × {carpan}.</li>
-      <li><strong>Net ücret</strong> = brüt tutardan yüzde {damgaYuzde} damga vergisi düşülür.</li>
+      <li><strong>Yaklaşık net</strong>: Fazla mesai ücreti maaşına eklenerek bordroya girer; SGK ve işsizlik primi, gelir vergisi ve yüzde {damgaYuzde} damga vergisi kesilir. Araç bu kesintilerin tamamını düşerek yaklaşık neti de gösterir.</li>
     </ul>
     <p>
       Girişte <strong>net maaşını</strong> (eline geçen tutarı) yazman yeterlidir; araç bunu
-      önce tahmini brüte çevirir, hesabı mevzuat gereği brüt üzerinden yapar ve sonucu net
-      olarak gösterir. Bordronu biliyorsan "Brüt gireceğim" seçeneğiyle doğrudan brüt girebilirsin.
+      önce tahmini brüte çevirir ve hesabı mevzuat gereği brüt üzerinden yapar. Bordronu biliyorsan "Brüt gireceğim" seçeneğiyle doğrudan brüt girebilirsin.
     </p>
     <div class="example">
       <p>
@@ -187,8 +183,8 @@ const relatedTools = [
       </p>
       <p>Saatlik ücret = {formatInt(ornekMaas)} / {saatBolen} = {formatTL(ornekSaatlik)} TL.</p>
       <p>Brüt fazla mesai = {formatTL(ornekSaatlik)} × {ornekSaat} × {carpan} = {formatTL(ornekBrut)} TL.</p>
-      <p>Damga vergisi = {formatTL(ornekBrut)} × yüzde {damgaYuzde} = {formatTL(ornekDamga)} TL.</p>
-      <p class="result">Net fazla mesai ücreti ≈ {formatTL(ornekNet)} TL.</p>
+      <p class="result">Alman gereken fazla mesai ücreti ≈ {formatTL(ornekBrut)} TL (brüt).</p>
+      <p>Maaşına eklendiğinde tüm kesintiler sonrası eline geçecek ek tutar ≈ {formatTL(ornekYaklasikNet)} TL.</p>
     </div>
   </Explanation>
 
@@ -202,7 +198,7 @@ const relatedTools = [
 </BaseLayout>
 
 <script>
-  import { calculateGrossFromNet, calculateOvertime } from '../utils/calc-web';
+  import { calculateGrossFromNet, calculateOvertime, calculateExtraPayNet } from '../utils/calc-web';
 
   const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
@@ -214,10 +210,11 @@ const relatedTools = [
   function resetDisplay() {
     document.getElementById('hourly-rate').textContent = 'TL 0,00';
     document.getElementById('gross-amount').textContent = 'TL 0,00';
-    document.getElementById('stamp-amount').textContent = '-TL 0,00';
-    document.getElementById('net-amount').textContent = 'TL 0,00';
+    document.getElementById('approx-net-amount').textContent = 'TL 0,00';
     const rv = document.getElementById('result-value');
     if (rv) rv.textContent = 'TL 0,00';
+    const rs = document.getElementById('result-sub');
+    if (rs) rs.textContent = '';
   }
 
   function recalc() {
@@ -255,12 +252,15 @@ const relatedTools = [
     const r = calculateOvertime(grossSalary, hours);
 
     document.getElementById('hourly-rate').textContent = `TL ${fmt(r.hourlyRate)}`;
+    // Mobil ile ayni: buyuk sonuc alman gereken BRUT, altinda tam kesintili yaklasik net
+    const approxNet = calculateExtraPayNet(grossSalary, r.grossAmount);
     document.getElementById('gross-amount').textContent = `TL ${fmt(r.grossAmount)}`;
-    document.getElementById('stamp-amount').textContent = `-TL ${fmt(r.stampTax)}`;
-    document.getElementById('net-amount').textContent = `TL ${fmt(r.netAmount)}`;
+    document.getElementById('approx-net-amount').textContent = `TL ${fmt(approxNet)}`;
 
     const rv = document.getElementById('result-value');
-    if (rv) rv.textContent = `TL ${fmt(r.netAmount)}`;
+    if (rv) rv.textContent = `TL ${fmt(r.grossAmount)}`;
+    const rs = document.getElementById('result-sub');
+    if (rs) rs.textContent = `yaklaşık net: TL ${fmt(approxNet)}`;
   }
 
   function init() {

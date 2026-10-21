@@ -6,6 +6,7 @@ import {
   calculateNoticeSeverance,
   calculateOvertime,
   calculatePublicHolidayWork,
+  calculateExtraPayNet,
   formatCurrency,
 } from './calc-web';
 
@@ -243,25 +244,60 @@ describe('İhbar Tazminatı', () => {
     expect(result.noticeWeeks).toBe(2);
   });
 
-  it('1-3 yıl kıdem için 4 hafta ihbar', () => {
-    const result = calculateNoticeSeverance(45000, 2);
-
-    expect(result.noticeWeeks).toBe(4);
+  // İş K. m.17 kademeleri ve sınır değerleri
+  it('tam 6 ay → 4 hafta (6 ay - 1,5 yıl)', () => {
+    expect(calculateNoticeSeverance(45000, 0.5).noticeWeeks).toBe(4);
   });
 
-  it('3 yıl+ kıdem için 8 hafta ihbar', () => {
-    const result = calculateNoticeSeverance(45000, 5);
-
-    expect(result.noticeWeeks).toBe(8);
+  it('1 yıl → 4 hafta', () => {
+    expect(calculateNoticeSeverance(45000, 1).noticeWeeks).toBe(4);
   });
 
-  it('İhbar tazminatı miktarı haftalık ücretle orantılı', () => {
-    const result = calculateNoticeSeverance(45000, 0.5);
+  it('1,5 yılın hemen altı → 4 hafta, tam 1,5 yıl → 6 hafta', () => {
+    expect(calculateNoticeSeverance(45000, 1.49).noticeWeeks).toBe(4);
+    expect(calculateNoticeSeverance(45000, 1.5).noticeWeeks).toBe(6);
+  });
 
-    const expectedWeekly = 45000 / 4.33;
-    const expectedAmount = Math.round(expectedWeekly * 2 * 100) / 100;
+  it('2 yıl → 6 hafta (1,5 - 3 yıl)', () => {
+    expect(calculateNoticeSeverance(45000, 2).noticeWeeks).toBe(6);
+  });
 
-    expect(result.noticeAmount).toBeCloseTo(expectedAmount, 1);
+  it('3 yılın hemen altı → 6 hafta, tam 3 yıl → 8 hafta', () => {
+    expect(calculateNoticeSeverance(45000, 2.99).noticeWeeks).toBe(6);
+    expect(calculateNoticeSeverance(45000, 3).noticeWeeks).toBe(8);
+  });
+
+  it('5 yıl → 8 hafta', () => {
+    expect(calculateNoticeSeverance(45000, 5).noticeWeeks).toBe(8);
+  });
+
+  it('haftalık ücret = aylık brüt / 30 × 7 (mobil ile aynı)', () => {
+    expect(calculateNoticeSeverance(45000, 1).weeklyRate).toBe(10500);
+  });
+
+  it('net = brüt − %15 gelir vergisi − damga vergisi', () => {
+    const r = calculateNoticeSeverance(45000, 0.3);
+    expect(r.noticeAmount).toBe(21000);
+    expect(r.incomeTax).toBe(3150);
+    expect(r.stampTax).toBe(159.39);
+    expect(r.netAmount).toBe(17690.61);
+  });
+});
+
+describe('Ek ödemenin yaklaşık neti (tam kesintilerle)', () => {
+  it('ek ödeme yoksa 0', () => {
+    expect(calculateExtraPayNet(35721.94, 0)).toBe(0);
+  });
+
+  it('net, brütten küçüktür (SGK + gelir vergisi + damga)', () => {
+    const net = calculateExtraPayNet(45000, 3000);
+    expect(net).toBeGreaterThan(0);
+    expect(net).toBeLessThan(3000);
+  });
+
+  it('maaş + ek ödemenin neti ile maaşın neti arasındaki farka eşittir', () => {
+    const fark = calculateNetFromGross(48000).net - calculateNetFromGross(45000).net;
+    expect(calculateExtraPayNet(45000, 3000)).toBe(Math.round(fark * 100) / 100);
   });
 });
 

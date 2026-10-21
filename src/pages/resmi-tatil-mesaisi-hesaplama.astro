@@ -8,6 +8,7 @@ import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
 import { YEAR, MINIMUM_WAGE, DAYS_PER_MONTH_CALCULATION, STAMP_TAX_RATE } from '../constants/parameters';
 import { formatTL, formatInt, formatPercent } from '../utils/format';
+import { calculateExtraPayNet } from '../utils/calc-web';
 
 // 2026 parametreleri (tek kaynak: constants/parameters.ts)
 const gunBolen = formatInt(DAYS_PER_MONTH_CALCULATION); // "30"
@@ -18,8 +19,7 @@ const ornMaas = 30000;
 const ornGun = 3;
 const ornGunluk = ornMaas / DAYS_PER_MONTH_CALCULATION;
 const ornBrut = ornGunluk * ornGun;
-const ornDamga = ornBrut * STAMP_TAX_RATE;
-const ornNet = ornBrut - ornDamga;
+const ornYaklasikNet = calculateExtraPayNet(ornMaas, ornBrut);
 
 // SSS — sorular Google'da aranan ifadelerden seçildi (FAQPage şeması FAQ bileşeninde üretilir)
 const asgariGunluk = MINIMUM_WAGE / DAYS_PER_MONTH_CALCULATION;
@@ -55,7 +55,7 @@ const faqItems = [
   },
   {
     question: "Resmi tatil ücretinden kesinti yapılır mı?",
-    answer: `Evet. Resmi tatil ek ücreti maaşa eklenerek bordroya yazılır; yüzde ${damgaYuzde} damga vergisinin yanında SGK primi ve gelir vergisi de kesilir. Yukarıdaki araç brüt tutarı ve damga vergisi kesintisini gösterir. Eline geçecek net tutar, SGK ve gelir vergisi kesintileri nedeniyle bundan daha düşük olabilir.`,
+    answer: `Evet. Resmi tatil ek ücreti maaşa eklenerek bordroya yazılır; yüzde ${damgaYuzde} damga vergisinin yanında SGK primi ve gelir vergisi de kesilir. Yukarıdaki araç önce alman gereken brüt tutarı, altında da bu kesintilerin tamamı düşülmüş yaklaşık neti gösterir. Yıl içinde kümülatif vergi matrahın üst dilime geçmişse bordrondaki net biraz daha düşük olabilir.`,
   },
 ];
 
@@ -85,13 +85,14 @@ const relatedTools = [
 
 <BaseLayout
   title="Resmi Tatil Mesaisi Ücreti Hesaplama 2026 — Ücretsiz Araç"
-  description="Aylık net maaşını ve çalıştığın resmi tatil gün sayısını gir; net resmi tatil mesaisi ek ücretini 2026 değerleriyle anında, ücretsiz ve gizli hesapla."
+  description="Aylık net maaşını ve çalıştığın resmi tatil gün sayısını gir; resmi tatil mesaisi ek ücretini ve yaklaşık netini 2026 değerleriyle anında hesapla."
 >
   <Calculator
     title="Resmi Tatil Mesaisi Hesaplayıcı"
-    description="Aylık net maaşını ve çalışılan resmi tatil günü sayısını gir, net ek ücretini anında öğren."
-    resultLabel="Tahmini Resmi Tatil Mesaisi (Net):"
+    description="Aylık net maaşını ve çalışılan resmi tatil günü sayısını gir, alman gereken ek ücreti anında öğren."
+    resultLabel="Alman Gereken Resmi Tatil Ücreti (brüt):"
     resultValue="TL 0,00"
+    showResultSub
   >
     <div style="display: flex; flex-direction: column; gap: 1rem;">
       <div>
@@ -133,17 +134,13 @@ const relatedTools = [
           <span>Günlük Ücret (brüt):</span>
           <strong id="daily-rate-holiday">TL 0,00</strong>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Brüt Ek Ücret:</span>
+        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
+          <span style="font-weight: bold;">Alman Gereken (brüt):</span>
           <strong id="gross-holiday-amount">TL 0,00</strong>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #dc2626;">
-          <span>Damga Vergisi:</span>
-          <strong id="stamp-holiday">-TL 0,00</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #ddd; color: #10b981; font-size: 1.1rem;">
-          <span style="font-weight: bold;">Net Ek Ücret:</span>
-          <strong id="net-holiday">TL 0,00</strong>
+        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; color: #6b7280; font-size: 0.9rem;">
+          <span>Yaklaşık net (tüm kesintiler sonrası):</span>
+          <span id="approx-net-holiday" style="white-space: nowrap; margin-left: 0.5rem;">TL 0,00</span>
         </div>
       </div>
 
@@ -155,16 +152,16 @@ const relatedTools = [
     <p>
       Resmi tatil, çalışılmasa bile ücreti ödenen bir gündür. Bu günde
       çalışıldığında, normal ücrete <strong>ek olarak 1 günlük ücret</strong> daha
-      ödenir (günlük ücretin yüzde 100'ü). Hesap iki adımdır:
+      ödenir (günlük ücretin yüzde 100'ü). Hesap şöyle yapılır:
     </p>
     <ul>
       <li><strong>Günlük ücret</strong> = aylık brüt maaş / {gunBolen}.</li>
-      <li><strong>Brüt ek ücret</strong> = günlük ücret × çalışılan resmi tatil günü sayısı.</li>
+      <li><strong>Alman gereken ek ücret (brüt)</strong> = günlük ücret × çalışılan resmi tatil günü sayısı.</li>
+      <li><strong>Yaklaşık net</strong>: Ek ücret maaşına eklenerek bordroya girer; SGK ve işsizlik primi, gelir vergisi ve yüzde {damgaYuzde} damga vergisi kesilir. Araç bu kesintilerin tamamını düşerek yaklaşık neti de gösterir.</li>
     </ul>
     <p>
       Girişte <strong>net maaşını</strong> (eline geçen tutarı) yazman yeterlidir; araç bunu
-      önce tahmini brüte çevirir, ek ücreti brüt üzerinden hesaplar ve sonucu net olarak
-      gösterir. Bordronu biliyorsan "Brüt gireceğim" seçeneğiyle doğrudan brüt girebilirsin.
+      önce tahmini brüte çevirir ve ek ücreti mevzuat gereği brüt üzerinden hesaplar. Bordronu biliyorsan "Brüt gireceğim" seçeneğiyle doğrudan brüt girebilirsin.
     </p>
     <div class="example">
       <p>
@@ -172,9 +169,8 @@ const relatedTools = [
         {ornGun} gün resmi tatilde çalışmış olsun.
       </p>
       <p>Günlük ücret = {formatInt(ornMaas)} / {gunBolen} = {formatTL(ornGunluk)} TL.</p>
-      <p>Brüt ek ücret = {formatTL(ornGunluk)} × {ornGun} = {formatTL(ornBrut)} TL.</p>
-      <p>Damga vergisi = {formatTL(ornBrut)} × yüzde {damgaYuzde} = {formatTL(ornDamga)} TL.</p>
-      <p class="result">Net resmi tatil ek ücreti ≈ {formatTL(ornNet)} TL.</p>
+      <p class="result">Alman gereken ek ücret = {formatTL(ornGunluk)} × {ornGun} = {formatTL(ornBrut)} TL (brüt).</p>
+      <p>Maaşına eklendiğinde tüm kesintiler sonrası eline geçecek ek tutar ≈ {formatTL(ornYaklasikNet)} TL.</p>
     </div>
   </Explanation>
 
@@ -188,7 +184,7 @@ const relatedTools = [
 </BaseLayout>
 
 <script>
-  import { calculateGrossFromNet, calculatePublicHolidayWork } from '../utils/calc-web';
+  import { calculateGrossFromNet, calculatePublicHolidayWork, calculateExtraPayNet } from '../utils/calc-web';
 
   const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
@@ -200,10 +196,11 @@ const relatedTools = [
   function resetDisplay() {
     document.getElementById('daily-rate-holiday').textContent = 'TL 0,00';
     document.getElementById('gross-holiday-amount').textContent = 'TL 0,00';
-    document.getElementById('stamp-holiday').textContent = '-TL 0,00';
-    document.getElementById('net-holiday').textContent = 'TL 0,00';
+    document.getElementById('approx-net-holiday').textContent = 'TL 0,00';
     const rv = document.getElementById('result-value');
     if (rv) rv.textContent = 'TL 0,00';
+    const rs = document.getElementById('result-sub');
+    if (rs) rs.textContent = '';
   }
 
   function recalc() {
@@ -241,12 +238,15 @@ const relatedTools = [
     const r = calculatePublicHolidayWork(grossSalary, days);
 
     document.getElementById('daily-rate-holiday').textContent = `TL ${fmt(r.dailyRate)}`;
+    // Mobil ile ayni: buyuk sonuc alman gereken BRUT, altinda tam kesintili yaklasik net
+    const approxNet = calculateExtraPayNet(grossSalary, r.grossAmount);
     document.getElementById('gross-holiday-amount').textContent = `TL ${fmt(r.grossAmount)}`;
-    document.getElementById('stamp-holiday').textContent = `-TL ${fmt(r.stampTax)}`;
-    document.getElementById('net-holiday').textContent = `TL ${fmt(r.netAmount)}`;
+    document.getElementById('approx-net-holiday').textContent = `TL ${fmt(approxNet)}`;
 
     const rv = document.getElementById('result-value');
-    if (rv) rv.textContent = `TL ${fmt(r.netAmount)}`;
+    if (rv) rv.textContent = `TL ${fmt(r.grossAmount)}`;
+    const rs = document.getElementById('result-sub');
+    if (rs) rs.textContent = `yaklaşık net: TL ${fmt(approxNet)}`;
   }
 
   function init() {
