@@ -7,8 +7,11 @@ import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
 import {
+  YEAR,
+  MINIMUM_WAGE,
   WORKING_DAYS_PER_MONTH,
   OVERTIME_MULTIPLIER,
+  FAZLA_SURELER_ARTIS,
   STAMP_TAX_RATE,
 } from '../constants/parameters';
 import { formatTL, formatInt, formatPercent } from '../utils/format';
@@ -27,26 +30,43 @@ const ornekBrut = ornekSaatlik * ornekSaat * OVERTIME_MULTIPLIER;
 const ornekDamga = ornekBrut * STAMP_TAX_RATE;
 const ornekNet = ornekBrut - ornekDamga;
 
+// SSS — sorular Google'da aranan ifadelerden seçildi (FAQPage şeması FAQ bileşeninde üretilir)
+const asgariSaatlik = MINIMUM_WAGE / WORKING_DAYS_PER_MONTH;
+const asgariBirSaat = asgariSaatlik * OVERTIME_MULTIPLIER;
+const fazlaSurelerArtis = formatPercent(FAZLA_SURELER_ARTIS, 0); // "25"
+
 const faqItems = [
   {
+    question: "Fazla mesai ücreti nasıl hesaplanır?",
+    answer: `Önce saatlik ücretini bulursun: aylık brüt maaş / ${saatBolen}. Sonra bunu fazla çalıştığın saatle ve ${carpan} ile çarparsın (İş Kanunu m.41). Örneğin brüt ${formatInt(ornekMaas)} TL maaşla ${ornekSaat} saat fazla mesai yaptıysan brüt ücretin yaklaşık ${formatTL(ornekBrut)} TL olur. Kendi rakamlarınla hesaplamak için yukarıdaki aracı kullanabilirsin; net maaşını girmen yeterli.`,
+  },
+  {
+    question: "1 saat fazla mesai ne kadar?",
+    answer: `1 saat fazla mesai = (aylık brüt / ${saatBolen}) × ${carpan}. ${YEAR} brüt asgari ücreti (${formatInt(MINIMUM_WAGE)} TL) ile çalışan biri için saatlik ücret ${formatTL(asgariSaatlik)} TL, 1 saat fazla mesai ise yaklaşık ${formatTL(asgariBirSaat)} TL brüttür. Maaşın daha yüksekse tutar da aynı oranda artar; yukarıdaki araca 1 saat yazarak kendi tutarını görebilirsin.`,
+  },
+  {
+    question: "Fazla mesai yüzde kaç zamlı ödenir?",
+    answer: `Haftalık 45 saati aşan her saat, normal saat ücretinin yüzde ${artisYuzde} fazlasıyla (${carpan} katı) ödenir. Sözleşmende haftalık süre 45 saatin altında belirlenmişse (ör. 40 saat), 40 ile 45 saat arasındaki çalışma "fazla sürelerle çalışma" sayılır ve yüzde ${fazlaSurelerArtis} zamlı ödenir. İşçi isterse ücret yerine her fazla saat için 1 saat 30 dakika serbest zaman da kullanabilir.`,
+  },
+  {
+    question: "Haftalık kaç saati aşınca fazla mesai başlar?",
+    answer: "Kanuni haftalık çalışma süresi en fazla 45 saattir; bunu aşan çalışma fazla mesaidir. Hesap günlük değil haftalık yapılır: bir gün 10 saat çalışıp başka bir gün erken çıktıysan haftalık toplam 45 saati geçmedikçe fazla mesai doğmaz. Taraflar anlaşırsa iki aylık denkleştirme de uygulanabilir. Fazla mesai için işçinin onayı gerekir ve yıllık toplamı 270 saati geçemez.",
+  },
+  {
+    question: "Fazla mesai ücreti net mi brüt mü hesaplanır?",
+    answer: `Fazla mesai ücreti kanunen brüt üzerinden hesaplanır ve maaşına eklenerek bordroya yazılır. Bu tutardan damga vergisinin yanında SGK primi ve gelir vergisi de kesilir. Yukarıdaki araç brüt tutarı ve yüzde ${damgaYuzde} damga vergisi kesintisini gösterir. Bordrona yansıyacak net tutar, SGK ve gelir vergisi kesintileri nedeniyle (yılın hangi ayında olduğuna ve vergi dilimine göre) daha düşük olabilir.`,
+  },
+  {
+    question: "Fazla mesaim ödenmezse ne yapabilirim?",
+    answer: "Önce işverenden yazılı olarak (ör. e-posta veya noter yoluyla) ödeme iste. Sonuç alamazsan ALO 170'i arayabilir ya da Çalışma ve İş Kurumu il müdürlüğüne şikâyette bulunabilirsin. Dava açmadan önce arabulucuya başvurman zorunludur; ücret alacakları için zamanaşımı 5 yıldır. Ödenmeyen fazla mesai, işçiye iş sözleşmesini haklı nedenle feshedip kıdem tazminatı isteme hakkı da verebilir. Bu süreçte çalıştığın saatlerin kaydı (puantaj, mesajlar, tanıklar) en güçlü delilin olur.",
+  },
+  {
     question: "Net maaşımı mı brüt maaşımı mı gireceğim?",
-    answer: "Varsayılan olarak aylık NET maaşını (eline geçen tutarı) girmen yeterlidir; çoğu çalışan brütünü değil netini bilir. Araç, net maaşını önce tahmini brüte çevirir, fazla mesai hesabını mevzuat gereği brüt üzerinden yapar ve sonucu net olarak gösterir. Bordronu biliyorsan 'Brüt gireceğim' seçeneğiyle doğrudan brüt de girebilirsin.",
-  },
-  {
-    question: "Fazla mesai nasıl hesaplanır?",
-    answer: `Saatlik ücret = aylık brüt / ${saatBolen}. Fazla mesai ücreti = saatlik ücret × saat × ${carpan} (İş Kanunu m.41). Bulunan brüt tutardan yüzde ${damgaYuzde} damga vergisi düşülür.`,
-  },
-  {
-    question: "İş Kanunu m.41 nedir?",
-    answer: `İş Kanunu 41. madde, fazla çalışma ücretinin normal saat ücretinin en az yüzde ${artisYuzde} fazlasıyla ödeneceğini belirtir. Yani her fazla mesai saati için saatlik ücretin ${carpan} katı ödenmelidir.`,
+    answer: "Varsayılan olarak aylık NET maaşını (eline geçen tutarı) girmen yeterlidir; çoğu çalışan brütünü değil netini bilir. Araç, net maaşını önce tahmini brüte çevirir, fazla mesai hesabını mevzuat gereği brüt üzerinden yapar. Bordronu biliyorsan 'Brüt gireceğim' seçeneğiyle doğrudan brüt de girebilirsin.",
   },
   {
     question: `Saatlik ücret neden aylık maaşın ${saatBolen}'e bölünmesiyle bulunuyor?`,
-    answer: `Standart aylık çalışma süresi 30 gün × 7,5 saat = ${saatBolen} saat kabul edilir. Bu yüzden saatlik ücret, aylık brüt maaşın ${saatBolen}'e bölünmesiyle bulunur.`,
-  },
-  {
-    question: "Gece çalışmasının veya bayram mesaisinin artışı dahil mi?",
-    answer: "Bu hesaplayıcı standart fazla mesai ücretini gösterir. Gece çalışması, hafta tatili, resmi tatil ve bayram gibi özel durumların ek artışları için muhasebe uzmanına danışmanız önemlidir.",
+    answer: `Haftalık 45 saatlik çalışma, 6 güne bölündüğünde günde 7,5 saate denk gelir. Aylık ücret 30 gün üzerinden ödendiği için 30 × 7,5 = ${saatBolen} saat esas alınır ve saatlik ücret aylık brütün ${saatBolen}'e bölünmesiyle bulunur.`,
   },
 ];
 
@@ -178,7 +198,7 @@ const relatedTools = [
 
   <AppBox campaignName="fazla-mesai" />
 
-  <Disclaimer />
+  <Disclaimer legalNote />
 </BaseLayout>
 
 <script>

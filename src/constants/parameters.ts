@@ -77,3 +77,7 @@ export const DAYS_PER_MONTH_CALCULATION = 30;
 // Asgari ücret istisnası (net-brüt hesaplamada)
 // Asgari ücrete kadar SGK kesintisi uygulanmaz
 export const MINIMUM_WAGE_EXEMPTION = true;
+
+// Fazla sürelerle çalışma artışı (İş Kanunu m.41): sözleşmedeki haftalık süre
+// 45 saatin altındaysa, o süreyi aşıp 45 saate kadar yapılan çalışma %25 zamlı ödenir
+export const FAZLA_SURELER_ARTIS = 0.25;

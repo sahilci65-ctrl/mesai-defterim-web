@@ -6,7 +6,7 @@ import FAQ from '../components/FAQ.astro';
 import AppBox from '../components/AppBox.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
-import { DAYS_PER_MONTH_CALCULATION, STAMP_TAX_RATE } from '../constants/parameters';
+import { YEAR, MINIMUM_WAGE, DAYS_PER_MONTH_CALCULATION, STAMP_TAX_RATE } from '../constants/parameters';
 import { formatTL, formatInt, formatPercent } from '../utils/format';
 
 // 2026 parametreleri (tek kaynak: constants/parameters.ts)
@@ -21,30 +21,41 @@ const ornBrut = ornGunluk * ornGun;
 const ornDamga = ornBrut * STAMP_TAX_RATE;
 const ornNet = ornBrut - ornDamga;
 
+// SSS — sorular Google'da aranan ifadelerden seçildi (FAQPage şeması FAQ bileşeninde üretilir)
+const asgariGunluk = MINIMUM_WAGE / DAYS_PER_MONTH_CALCULATION;
+
 const faqItems = [
   {
+    question: "Resmi tatilde çalışan işçi ne kadar alır?",
+    answer: `Resmi tatilde çalışan işçi, o günün normal ücretine ek olarak bir günlük ücret daha alır (İş Kanunu m.47). Günlük ücret aylık brüt maaşın ${gunBolen}'a bölünmesiyle bulunur. Örneğin brüt ${formatInt(ornMaas)} TL maaşla ${ornGun} gün resmi tatilde çalışan biri, maaşının üstüne yaklaşık ${formatTL(ornBrut)} TL brüt ek ücret almalıdır. Kendi tutarını görmek için yukarıdaki aracı kullanabilirsin.`,
+  },
+  {
+    question: "Asgari ücretli resmi tatilde çalışırsa ne alır?",
+    answer: `${YEAR} brüt asgari ücreti ${formatInt(MINIMUM_WAGE)} TL'dir; günlük brüt ücret ${formatInt(MINIMUM_WAGE)} / ${gunBolen} = ${formatTL(asgariGunluk)} TL eder. Asgari ücretli bir işçi resmi tatilde çalıştığı her gün için maaşına ek olarak ${formatTL(asgariGunluk)} TL brüt alır. Örneğin 3,5 günlük bir bayramın tamamında çalışırsa ek ücreti ${formatTL(asgariGunluk * 3.5)} TL brüt olur. Bu tutardan yasal kesintiler yapılır.`,
+  },
+  {
+    question: "Resmi tatil ücreti kaç kat ödenir?",
+    answer: "Halk arasında \"çift yevmiye\" denir: resmi tatilde çalışılan gün için toplam 2 günlük ücret ödenir. Bunun 1 günü zaten aylık maaşının içindedir (çalışmasan da alırdın), diğer 1 günü çalıştığın için eklenen ücrettir. Yani bordronda maaşına ek olarak görmen gereken, çalıştığın her gün için 1 günlük ücrettir. Toplu sözleşme veya iş sözleşmesiyle daha yüksek bir oran belirlenmişse o uygulanır.",
+  },
+  {
+    question: "Hangi günler resmi tatil sayılır?",
+    answer: "1 Ocak Yılbaşı, 23 Nisan, 1 Mayıs, 19 Mayıs, 15 Temmuz, 30 Ağustos ve 29 Ekim (28 Ekim öğleden sonrasıyla birlikte 1,5 gün) ulusal bayram ve genel tatildir. Bunlara arife günü öğleden sonrası dahil 3,5 günlük Ramazan Bayramı ve 4,5 günlük Kurban Bayramı eklenir. Dini bayramların tarihleri her yıl yaklaşık 11 gün öne kayar. Hükümetin ilan ettiği idari izinler resmi tatil sayılmaz; özel sektörde bu günlerde çalışmak ek ücret doğurmaz.",
+  },
+  {
+    question: "Resmi tatilde çalışmak zorunlu mu?",
+    answer: "Resmi tatilde çalışılıp çalışılmayacağı iş sözleşmesi veya toplu iş sözleşmesiyle belirlenir (İş Kanunu m.44). Sözleşmende bu konuda bir hüküm yoksa işveren seni resmi tatilde çalışmaya zorlayamaz, onayını alması gerekir. Hastane, güvenlik veya kesintisiz üretim gibi işin niteliği gereği sürekli çalışılan yerlerde ise bu genellikle baştan sözleşmede yer alır. Her durumda resmi tatilde çalıştığın günün ek ücreti ödenmelidir.",
+  },
+  {
+    question: "Resmi tatil ücreti ödenmezse ne yapılır?",
+    answer: "Önce bordrona bak: resmi tatil ücreti ayrı bir kalem olarak görünmelidir. Ödenmemişse işverenden yazılı olarak iste. Sonuç alamazsan ALO 170'i arayabilir veya Çalışma ve İş Kurumu il müdürlüğüne şikâyette bulunabilirsin. Dava yoluna gitmeden önce arabulucuya başvurmak zorunludur; bu alacak için zamanaşımı 5 yıldır. Hangi resmi tatillerde çalıştığını gösteren kayıtlar (puantaj, vardiya listesi, mesajlar) hakkını ispatlamanı kolaylaştırır.",
+  },
+  {
     question: "Net maaşımı mı brüt maaşımı mı gireceğim?",
-    answer: "Varsayılan olarak aylık NET maaşını (eline geçen tutarı) girmen yeterlidir; çoğu çalışan brütünü değil netini bilir. Araç, net maaşını önce tahmini brüte çevirir, resmi tatil ek ücretini brüt üzerinden hesaplar ve sonucu net olarak gösterir. Bordronu biliyorsan 'Brüt gireceğim' seçeneğiyle doğrudan brüt de girebilirsin.",
-  },
-  {
-    question: "Resmi tatilde çalışmanın ücreti nedir?",
-    answer: `Resmi tatilde çalışılan her gün için, normal maaşa ek olarak 1 günlük ücret daha ödenir (günlük ücretin yüzde 100'ü). Günlük ücret = aylık brüt / ${gunBolen}. Örneğin ${formatInt(ornMaas)} TL aylık, ${ornGun} gün resmi tatil çalışması = (${formatInt(ornMaas)}/${gunBolen}) × ${ornGun} = ${formatTL(ornBrut)} TL brüt ek ücret.`,
-  },
-  {
-    question: "Günlük ücret nasıl bulunuyor?",
-    answer: `Günlük ücret, aylık brüt maaşın ${gunBolen}'a bölünmesiyle bulunur. Resmi tatil ek ücreti bu günlük ücret ile çalışılan resmi tatil günü sayısının çarpımıdır.`,
-  },
-  {
-    question: "2026 resmi tatil günleri hangileridir?",
-    answer: "Resmi tatiller: Yılbaşı (1 Ocak), Ulusal Egemenlik ve Çocuk Bayramı (23 Nisan), Emek ve Dayanışma Günü (1 Mayıs), Atatürk'ü Anma, Gençlik ve Spor Bayramı (19 Mayıs), Demokrasi ve Millî Birlik Günü (15 Temmuz), Zafer Bayramı (30 Ağustos), Cumhuriyet Bayramı (29 Ekim) ile Ramazan ve Kurban Bayramı günleridir.",
+    answer: "Varsayılan olarak aylık NET maaşını (eline geçen tutarı) girmen yeterlidir; çoğu çalışan brütünü değil netini bilir. Araç, net maaşını önce tahmini brüte çevirir ve resmi tatil ek ücretini mevzuat gereği brüt üzerinden hesaplar. Bordronu biliyorsan 'Brüt gireceğim' seçeneğiyle doğrudan brüt de girebilirsin.",
   },
   {
     question: "Resmi tatil ücretinden kesinti yapılır mı?",
-    answer: `Evet, brüt ek ücret üzerinden yüzde ${damgaYuzde} oranında damga vergisi kesilir; net ek ücret bu kesinti sonrası kalan tutardır.`,
-  },
-  {
-    question: "Hafta sonu ile resmi tatil aynı güne denk gelirse ne olur?",
-    answer: "Hafta tatili ile resmi tatil aynı güne denk geldiğinde ek ödemeler doğabilir. Bu özel durumlar için muhasebe uzmanına danışmanız önemlidir.",
+    answer: `Evet. Resmi tatil ek ücreti maaşa eklenerek bordroya yazılır; yüzde ${damgaYuzde} damga vergisinin yanında SGK primi ve gelir vergisi de kesilir. Yukarıdaki araç brüt tutarı ve damga vergisi kesintisini gösterir. Eline geçecek net tutar, SGK ve gelir vergisi kesintileri nedeniyle bundan daha düşük olabilir.`,
   },
 ];
 
@@ -173,7 +184,7 @@ const relatedTools = [
 
   <AppBox campaignName="resmi-tatil" />
 
-  <Disclaimer />
+  <Disclaimer legalNote />
 </BaseLayout>
 
 <script>

@@ -1,9 +1,21 @@
 ---
 // Bağımsızlık beyanı — her sayfanın sonunda
+export interface Props {
+  // true ise hukuki uyuşmazlık yönlendirmesi de gösterilir (SSS'li sayfalar)
+  legalNote?: boolean;
+}
+
+const { legalNote = false } = Astro.props;
 ---
 
 <footer class="disclaimer">
   <div class="disclaimer-container">
+    {legalNote && (
+      <p class="disclaimer-text disclaimer-legal">
+        Bu bilgiler bilgilendirme amaçlıdır; hukuki uyuşmazlıkta ALO 170'e veya
+        bir iş hukuku avukatına başvurun.
+      </p>
+    )}
     <p class="disclaimer-text">
       Bu site bağımsız bir hesaplama aracıdır; T.C. Çalışma ve Sosyal Güvenlik
       Bakanlığı, SGK veya herhangi bir resmi kurumla ilişkisi yoktur.
@@ -32,6 +44,12 @@
     color: var(--color-text-secondary);
     line-height: var(--line-height-relaxed);
     text-align: center;
+  }
+
+  .disclaimer-legal {
+    margin-bottom: var(--space-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
   }
 
   .disclaimer-links {
