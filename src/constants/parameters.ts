@@ -43,20 +43,27 @@ export const SEVERANCE_CEILINGS: {
 ];
 
 // Verilen işten çıkış tarihine göre geçerli kıdem tavanını döndürür.
-// Tarih hiçbir döneme düşmüyorsa (veya verilmemişse) en güncel dönemin tavanı kullanılır.
+// Mobil kidemTavani ile aynı: tarih bilinen dönemlerin dışındaysa en yakın
+// uçtaki tavan (ilk dönemden önce → ilk, son dönemden sonra → son).
+// Tarih verilmemişse en güncel dönemin tavanı kullanılır.
 export function getSeveranceCeiling(exitDate?: string): number {
-  if (exitDate) {
-    for (const period of SEVERANCE_CEILINGS) {
-      if (exitDate >= period.start && exitDate <= period.end) {
-        return period.annualCap;
-      }
+  const first = SEVERANCE_CEILINGS[0]!;
+  const last = SEVERANCE_CEILINGS[SEVERANCE_CEILINGS.length - 1]!;
+  if (!exitDate) return last.annualCap;
+  for (const period of SEVERANCE_CEILINGS) {
+    if (exitDate >= period.start && exitDate <= period.end) {
+      return period.annualCap;
     }
   }
-  return SEVERANCE_CEILINGS[SEVERANCE_CEILINGS.length - 1].annualCap;
+  return exitDate < first.start ? first.annualCap : last.annualCap;
 }
 
-// Kıdem tazminatı hesaplanırken kullanılan gün sayısı
+// Kıdem tazminatı: her tam yıl için 30 günlük ücret (metinlerde kullanılır)
 export const SEVERANCE_DAYS_PER_YEAR = 30;
+
+// Kıdemde 1 yıl = 365 takvim günü (mobil KIDEM_YIL_GUN).
+// Brüt = esas ücret × çalışılan gün / 365; 365 günden az kıdemde hak doğmaz.
+export const SEVERANCE_YEAR_DAYS = 365;
 
 // İhbar süreleri (İş Kanunu m.17) — kıdem yılına göre hafta
 // Mobil: calc.ts ihbarSuresiHafta (<6 ay 2, 6-18 ay 4, 18-36 ay 6, 36+ ay 8)

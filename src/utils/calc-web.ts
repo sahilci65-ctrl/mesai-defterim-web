@@ -6,7 +6,7 @@ import {
   SGK_RATES,
   STAMP_TAX_RATE,
   getSeveranceCeiling,
-  SEVERANCE_DAYS_PER_YEAR,
+  SEVERANCE_YEAR_DAYS,
   NOTICE_PERIODS,
   OVERTIME_MULTIPLIER,
   WORKING_DAYS_PER_MONTH,
@@ -95,60 +95,63 @@ export function calculateGrossFromNet(
   return calculateNetFromGross(Math.round(((low + high) / 2) * 100) / 100);
 }
 
-// Kıdem tazminatı hesapla
+// İki 'YYYY-MM-DD' tarihi arasındaki takvim günü (saat dilimi etkisiz) — mobil gunFarki
+export function daysBetween(start: string, end: string): number {
+  const [sy, sm, sd] = start.split('-').map(Number);
+  const [ey, em, ed] = end.split('-').map(Number);
+  const startUTC = Date.UTC(sy ?? 0, (sm ?? 1) - 1, sd ?? 1);
+  const endUTC = Date.UTC(ey ?? 0, (em ?? 1) - 1, ed ?? 1);
+  return Math.round((endUTC - startUTC) / 86_400_000);
+}
+
+// Kıdem tazminatı hesapla — MOBIL ile ayni model (calc.ts kidemTazminati):
+// brüt = min(aylık brüt, çıkış dönemi tavanı) × gün / 365; yalnız damga vergisi.
+// Ara degerler yuvarlanmaz, yalniz ciktilar yuvarlanir.
 export function calculateSeverance(
-  monthlyGrossIncome: number,
-  senioryYears: number,
-  senioryMonths: number = 0,
-  senioryDays: number = 0,
-  exitDate?: string
+  entryDate: string,
+  exitDate: string,
+  monthlyGrossIncome: number
 ): {
   totalDays: number;
-  dailyGross: number;
+  entitled: boolean;
+  ceiling: number;
+  cappedAnnual: number;
+  ceilingApplied: boolean;
   grossAmount: number;
   stampTax: number;
   netAmount: number;
 } {
-  // Kıdem süresi yıl cinsinden (artık ay ve günler oranlı)
-  const totalYears = senioryYears + senioryMonths / 12 + senioryDays / 365;
+  const totalDays = daysBetween(entryDate, exitDate);
+  const ceiling = getSeveranceCeiling(exitDate);
+  const cappedAnnual = Math.min(monthlyGrossIncome, ceiling);
+  const ceilingApplied = monthlyGrossIncome > ceiling;
 
-  // Ödemeye esas gün (her tam yıl = 30 gün)
-  const totalDays = Math.round(totalYears * SEVERANCE_DAYS_PER_YEAR * 100) / 100;
-
-  // İş Kanunu: kıdem tazminatı hakkı için en az 1 tam yıl çalışma şarttır.
-  // 1 yıldan az kıdemde tazminat hakkı doğmaz → tutar 0.
-  if (totalYears < 1) {
+  // İş Kanunu: en az 1 tam yıl (365 gün) çalışma şart
+  if (totalDays < SEVERANCE_YEAR_DAYS) {
     return {
       totalDays,
-      dailyGross: 0,
+      entitled: false,
+      ceiling,
+      cappedAnnual: round2(cappedAnnual),
+      ceilingApplied,
       grossAmount: 0,
       stampTax: 0,
       netAmount: 0,
     };
   }
 
-  // Kıdeme esas yıllık ücret tavanla sınırlanır (çıkış tarihinin dönemine göre)
-  const annualCap = getSeveranceCeiling(exitDate);
-  const cappedAnnual = Math.min(monthlyGrossIncome, annualCap);
-
-  // Günlük brüt = kıdeme esas yıllık / 30
-  const dailyGross = Math.round((cappedAnnual / SEVERANCE_DAYS_PER_YEAR) * 100) / 100;
-
-  // Brüt tazminat = kıdeme esas yıllık ücret × tam yıl (+ artık gün oranı)
-  const grossAmount = Math.round(cappedAnnual * totalYears * 100) / 100;
-
-  // Damga vergisi
-  const stampTax = Math.round(grossAmount * STAMP_TAX_RATE * 100) / 100;
-
-  // Net = brüt - damga vergisi
-  const netAmount = Math.round((grossAmount - stampTax) * 100) / 100;
+  const grossExact = cappedAnnual * (totalDays / SEVERANCE_YEAR_DAYS);
+  const stampExact = grossExact * STAMP_TAX_RATE;
 
   return {
-    totalDays: Math.round(totalDays * 100) / 100,
-    dailyGross,
-    grossAmount: Math.round(grossAmount * 100) / 100,
-    stampTax,
-    netAmount,
+    totalDays,
+    entitled: true,
+    ceiling,
+    cappedAnnual: round2(cappedAnnual),
+    ceilingApplied,
+    grossAmount: round2(grossExact),
+    stampTax: round2(stampExact),
+    netAmount: round2(grossExact - stampExact),
   };
 }
 

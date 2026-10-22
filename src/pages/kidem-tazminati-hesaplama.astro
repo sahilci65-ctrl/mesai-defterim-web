@@ -8,49 +8,45 @@ import Disclaimer from '../components/Disclaimer.astro';
 import RelatedTools from '../components/RelatedTools.astro';
 import {
   SEVERANCE_CEILINGS,
-  getSeveranceCeiling,
   SEVERANCE_DAYS_PER_YEAR,
+  SEVERANCE_YEAR_DAYS,
   STAMP_TAX_RATE,
 } from '../constants/parameters';
 import { formatTL, formatInt, formatPercent } from '../utils/format';
+import { calculateSeverance } from '../utils/calc-web';
 
 // 2026 parametreleri (tek kaynak: constants/parameters.ts)
 const capH1Str = formatTL(SEVERANCE_CEILINGS[0].annualCap); // "64.948,77"
 const capH2Str = formatTL(SEVERANCE_CEILINGS[1].annualCap); // "73.729,84"
 const gunYil = formatInt(SEVERANCE_DAYS_PER_YEAR); // "30"
+const yilGun = formatInt(SEVERANCE_YEAR_DAYS); // "365"
 const damgaYuzde = formatPercent(STAMP_TAX_RATE); // "0,759"
 
-// Örnek 1 — tavan ALTI: 5 yıl / 30.000 TL, çıkış 2026 II. yarı
+// Örnekler — hesaplayıcının kullandığı fonksiyonun kendisiyle hesaplanır
+const ornGiris = '2021-08-15';
+const ornCikis = '2026-08-15'; // 2026 II. yarı → H2 tavanı
+const ornTarih = '15.08.2021 – 15.08.2026';
 const orn1Maas = 30000;
-const orn1Yil = 5;
-const capGuncel = getSeveranceCeiling('2026-08-15'); // H2 tavanı
-const orn1Esas = Math.min(orn1Maas, capGuncel);
-const orn1Brut = orn1Esas * orn1Yil;
-const orn1Damga = orn1Brut * STAMP_TAX_RATE;
-const orn1Net = orn1Brut - orn1Damga;
-
-// Örnek 2 — tavan ÜSTÜ: 5 yıl / 100.000 TL, çıkış 2026 II. yarı
+const orn1 = calculateSeverance(ornGiris, ornCikis, orn1Maas);
 const orn2Maas = 100000;
-const orn2Yil = 5;
-const orn2Esas = Math.min(orn2Maas, capGuncel); // tavana çekilir
-const orn2Brut = orn2Esas * orn2Yil;
+const orn2 = calculateSeverance(ornGiris, ornCikis, orn2Maas);
 
 const faqItems = [
   {
     question: "Kıdem tazminatı nasıl hesaplanır?",
-    answer: `Her tam yıl için bir aylık (${gunYil} günlük) giydirilmiş brüt ücret ödenir. Kıdeme esas yıllık ücret, işten çıkış tarihinin düştüğü dönemin tavanıyla sınırlıdır. Örneğin ${formatInt(orn1Maas)} TL aylık, ${orn1Yil} yıl kıdem = ${formatInt(orn1Maas)} × ${orn1Yil} = ${formatTL(orn1Brut)} TL brüt (maaş tavanın altında olduğu için tavan devreye girmez).`,
+    answer: `Her tam yıl için bir aylık (${gunYil} günlük) giydirilmiş brüt ücret ödenir; artan süre gün hesabıyla orantılı eklenir. Kısaca brüt = kıdeme esas ücret × çalışılan gün / ${yilGun}. Örneğin ${formatInt(orn1Maas)} TL brüt maaşla ${ornTarih} arası çalışan biri ${formatInt(orn1.totalDays)} gün kıdeme sahiptir; brüt tazminatı ${formatTL(orn1.grossAmount)} TL olur. Kendi tarihlerinle hesaplamak için yukarıdaki aracı kullanabilirsin.`,
   },
   {
     question: "Kıdem tazminatı tavanı nedir?",
-    answer: `Kıdeme esas yıllık ücret, işten çıkış tarihinin düştüğü dönemin tavanını aşamaz. 2026 resmi tavanları: 1 Ocak - 30 Haziran 2026 arası ${capH1Str} TL; 1 Temmuz - 31 Aralık 2026 arası ${capH2Str} TL. Aylık brüt maaşınız bu tutarın üzerindeyse, her yıl için tavan tutarı kullanılır.`,
+    answer: `Kıdeme esas ücret, işten çıkış tarihinin düştüğü dönemin tavanını aşamaz. 2026 resmi tavanları: 1 Ocak - 30 Haziran 2026 arası ${capH1Str} TL; 1 Temmuz - 31 Aralık 2026 arası ${capH2Str} TL. Aylık brüt maaşın bu tutarın üzerindeyse hesapta tavan tutarı kullanılır.`,
   },
   {
     question: "1 yıldan az çalışırsam kıdem tazminatı alabilir miyim?",
-    answer: "Hayır. İş Kanunu'na göre kıdem tazminatına hak kazanmak için aynı işverende en az 1 tam yıl çalışmış olmak gerekir. 1 yıldan az kıdemde tazminat hakkı doğmaz ve hesaplayıcı 0 gösterir.",
+    answer: `Hayır. İş Kanunu'na göre kıdem tazminatına hak kazanmak için aynı işverende en az 1 tam yıl (${yilGun} gün) çalışmış olmak gerekir. Daha kısa sürede tazminat hakkı doğmaz ve hesaplayıcı 0 gösterir.`,
   },
   {
     question: "Artık ay ve günler nasıl hesaplanır?",
-    answer: `Tam yıllar için her yıl bir aylık ücret ödenir; artan aylar ve günler ise oranlı hesaplanır. Örneğin 6 ay, bir yılın yarısı (aylık ücretin yarısı) olarak; artan günler ise gün/365 oranında eklenir.`,
+    answer: `Hesap, işe giriş ile işten çıkış arasındaki gerçek takvim günü üzerinden yapılır: her ${yilGun} gün bir yıllık ücrete karşılık gelir, artan günler aynı oranla eklenir. Bu yüzden ay ve gün sayısını ayrıca girmen gerekmez; iki tarihi girmen yeterlidir.`,
   },
   {
     question: "Damga vergisi ne kadar kesilir?",
@@ -58,7 +54,7 @@ const faqItems = [
   },
   {
     question: "Sonuç kesin mi?",
-    answer: "Hesaplanan tutar tahmini olup, kesin hesap için muhasebe uzmanına danışmanız önemlidir. Kıdem tavanı yılın her yarısında güncellenir ve giydirilmiş ücret (yol, yemek, ikramiye gibi ek ödemeler) hesabı sonucu etkileyebilir.",
+    answer: "Hesaplanan tutar tahminidir; kesin hesap için muhasebe uzmanına danışmanı öneririz. Kıdem tavanı yılın her yarısında güncellenir ve giydirilmiş ücret (yol, yemek, ikramiye gibi düzenli ek ödemeler) hesabı sonucu artırabilir.",
   },
 ];
 
@@ -88,11 +84,11 @@ const relatedTools = [
 
 <BaseLayout
   title="Kıdem Tazminatı Hesaplama 2026 — Güncel Tavanla Ücretsiz"
-  description="Maaşını ve kıdem süreni gir; 2026 kıdem tavanı ve damga vergisiyle net kıdem tazminatını anında, ücretsiz ve tarayıcında gizli olarak hesapla."
+  description="Maaşını, işe giriş ve çıkış tarihini gir; 2026 kıdem tavanı ve damga vergisiyle net kıdem tazminatını anında, ücretsiz ve gizli hesapla."
 >
   <Calculator
     title="Kıdem Tazminatı Hesaplayıcı"
-    description="Aylık brüt maaşını ve kıdem süreni gir, tahmini kıdem tazminatı tutarını öğren."
+    description="Aylık brüt maaşını, işe giriş ve işten çıkış tarihini gir, tahmini kıdem tazminatını öğren."
     resultLabel="Tahmini Kıdem Tazminatı (Net):"
     resultValue="TL 0,00"
   >
@@ -111,6 +107,16 @@ const relatedTools = [
       </div>
 
       <div>
+        <label for="entry-date-severance">İşe Giriş Tarihi</label><br />
+        <input
+          id="entry-date-severance"
+          type="date"
+          value="2016-07-21"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
+        />
+      </div>
+
+      <div>
         <label for="exit-date-severance">İşten Çıkış Tarihi</label><br />
         <input
           id="exit-date-severance"
@@ -121,56 +127,14 @@ const relatedTools = [
         <small id="ceiling-note" style="display: block; margin-top: 0.35rem; color: #6b7280;"></small>
       </div>
 
-      <div style="display: flex; gap: 1rem;">
-        <div style="flex: 1;">
-          <label for="years-severance">Kıdem Yılı</label><br />
-          <input
-            id="years-severance"
-            type="number"
-            placeholder="10"
-            min="0"
-            max="50"
-            step="1"
-            value="10"
-            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
-          />
-        </div>
-        <div style="flex: 1;">
-          <label for="months-severance">Ay (0-11)</label><br />
-          <input
-            id="months-severance"
-            type="number"
-            placeholder="0"
-            min="0"
-            max="11"
-            step="1"
-            value="0"
-            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
-          />
-        </div>
-        <div style="flex: 1;">
-          <label for="days-severance">Gün (0-30)</label><br />
-          <input
-            id="days-severance"
-            type="number"
-            placeholder="0"
-            min="0"
-            max="30"
-            step="1"
-            value="0"
-            style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; min-height: 48px;"
-          />
-        </div>
-      </div>
-
-      <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
+            <div style="background: #f5f5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.95rem;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Toplam Gün:</span>
-          <strong id="total-days">0</strong>
+          <span>Çalışma Süresi:</span>
+          <strong id="total-days">0 gün</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span>Günlük Brüt Ücret:</span>
-          <strong id="daily-rate">TL 0,00</strong>
+          <span>Kıdeme Esas Ücret:</span>
+          <strong id="capped-annual">TL 0,00</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
           <span>Brüt Tazminat:</span>
@@ -201,27 +165,27 @@ const relatedTools = [
         işten çıkış tarihinin düştüğü dönemin <strong>kıdem tavanını</strong> aşamaz.
         2026 tavanları: yılın ilk yarısı {capH1Str} TL, ikinci yarısı {capH2Str} TL.
       </li>
-      <li><strong>Brüt tazminat</strong> = kıdeme esas yıllık ücret × tam yıl sayısı (artan ay ve günler oranlı eklenir).</li>
+      <li><strong>Brüt tazminat</strong> = kıdeme esas ücret × çalışılan gün / {yilGun}. Gün sayısı, işe giriş ile işten çıkış arasındaki gerçek takvim günüdür (artık yıllar dahil).</li>
       <li><strong>Net tazminat</strong> = brüt tutardan yüzde {damgaYuzde} damga vergisi düşülür (başka kesinti yoktur).</li>
     </ul>
     <div class="example">
       <p>
-        <strong>Örnek (tavan altı):</strong> {orn1Yil} yıl çalışan, aylık {formatInt(orn1Maas)} TL
-        brüt maaşlı biri (çıkış: 2026 ikinci yarı).
+        <strong>Örnek (tavan altı):</strong> {ornTarih} arası çalışan, aylık {formatInt(orn1Maas)} TL
+        brüt maaşlı biri (çıkış 2026 ikinci yarısında). Çalışma süresi {formatInt(orn1.totalDays)} gündür.
       </p>
       <p>
         Maaş ({formatInt(orn1Maas)} TL), dönemin tavanının ({capH2Str} TL) altında olduğu için
-        aynen kullanılır: Brüt = {formatInt(orn1Maas)} × {orn1Yil} = {formatTL(orn1Brut)} TL.
+        aynen kullanılır: Brüt = {formatInt(orn1Maas)} × {formatInt(orn1.totalDays)} / {yilGun} = {formatTL(orn1.grossAmount)} TL.
       </p>
-      <p>Damga vergisi = {formatTL(orn1Brut)} × yüzde {damgaYuzde} = {formatTL(orn1Damga)} TL.</p>
-      <p class="result">Net kıdem tazminatı ≈ {formatTL(orn1Net)} TL.</p>
+      <p>Damga vergisi = {formatTL(orn1.grossAmount)} × yüzde {damgaYuzde} = {formatTL(orn1.stampTax)} TL.</p>
+      <p class="result">Net kıdem tazminatı ≈ {formatTL(orn1.netAmount)} TL.</p>
     </div>
     <div class="example">
       <p>
-        <strong>Örnek (tavan üstü):</strong> Aynı süre, ama aylık {formatInt(orn2Maas)} TL maaş.
-        Maaş, tavanın ({capH2Str} TL) üzerinde olduğu için her yıl için tavan kullanılır:
+        <strong>Örnek (tavan üstü):</strong> Aynı tarihler, ama aylık {formatInt(orn2Maas)} TL maaş.
+        Maaş, tavanın ({capH2Str} TL) üzerinde olduğu için tavan kullanılır:
       </p>
-      <p class="result">Brüt = {capH2Str} × {orn2Yil} = {formatTL(orn2Brut)} TL (damga vergisi ayrıca düşülür).</p>
+      <p class="result">Brüt = {capH2Str} × {formatInt(orn2.totalDays)} / {yilGun} = {formatTL(orn2.grossAmount)} TL; net ≈ {formatTL(orn2.netAmount)} TL.</p>
     </div>
   </Explanation>
 
@@ -235,128 +199,67 @@ const relatedTools = [
 </BaseLayout>
 
 <script>
-  const SEVERANCE_DAYS_PER_YEAR = 30;
-  const STAMP_TAX_RATE = 0.00759;
+  // Hesap mantığı tek kaynakta: utils/calc-web.ts (mobil kidemTazminati ile birebir).
+  // Kıdem tavanları constants/parameters.ts'ten gelir.
+  import { calculateSeverance } from '../utils/calc-web';
 
-  // Kıdem tazminatı tavanı — DÖNEM BAZLI (yıllık brüt). İşten çıkış tarihi
-  // hangi döneme düşüyorsa o dönemin tavanı kullanılır. Resmî değerler.
-  const SEVERANCE_CEILINGS = [
-    { start: '2026-01-01', end: '2026-06-30', annualCap: 64948.77 },
-    { start: '2026-07-01', end: '2026-12-31', annualCap: 73729.84 },
-  ];
+  const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  const fmtInt = (n) => new Intl.NumberFormat('tr-TR').format(n);
 
-  function getSeveranceCeiling(exitDate) {
-    if (exitDate) {
-      for (const period of SEVERANCE_CEILINGS) {
-        if (exitDate >= period.start && exitDate <= period.end) {
-          return period.annualCap;
-        }
-      }
-    }
-    // Varsayılan: en güncel dönemin tavanı
-    return SEVERANCE_CEILINGS[SEVERANCE_CEILINGS.length - 1].annualCap;
+  function show(r) {
+    document.getElementById('total-days').textContent =
+      `${fmtInt(r.totalDays)} gün (≈ ${(Math.floor((r.totalDays / 365) * 10) / 10).toLocaleString('tr-TR')} yıl)`;
+    document.getElementById('capped-annual').textContent =
+      `TL ${fmt(r.cappedAnnual)}${r.ceilingApplied ? ' (tavan)' : ''}`;
+    document.getElementById('gross-severance-amount').textContent = `TL ${fmt(r.grossAmount)}`;
+    document.getElementById('stamp-severance').textContent = `-TL ${fmt(r.stampTax)}`;
+    document.getElementById('net-severance').textContent = `TL ${fmt(r.netAmount)}`;
+    const rv = document.getElementById('result-value');
+    if (rv) rv.textContent = `TL ${fmt(r.netAmount)}`;
   }
 
-  function calculateSeverance() {
+  function resetDisplay() {
+    show({ totalDays: 0, cappedAnnual: 0, ceilingApplied: false, grossAmount: 0, stampTax: 0, netAmount: 0 });
+  }
+
+  function calculate() {
     const gross = parseFloat(document.getElementById('gross-severance').value) || 0;
-    const years = parseFloat(document.getElementById('years-severance').value) || 0;
-    const months = parseFloat(document.getElementById('months-severance').value) || 0;
-    const days = parseFloat(document.getElementById('days-severance').value) || 0;
-    const exitDate = document.getElementById('exit-date-severance').value || '';
-
-    const fmt = (n) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-
-    // Geçerli tavanı bul ve bilgilendirme notunu yaz
-    const annualCap = getSeveranceCeiling(exitDate);
+    const entry = document.getElementById('entry-date-severance').value || '';
+    const exit = document.getElementById('exit-date-severance').value || '';
     const note = document.getElementById('ceiling-note');
-    if (note) {
-      note.textContent = `Bu tarih için geçerli kıdem tavanı: ${fmt(annualCap)} TL/yıl`;
-    }
 
-    if (gross <= 0) {
+    if (gross <= 0 || !entry || !exit) {
+      if (note) note.textContent = '';
       resetDisplay();
       return;
     }
 
-    // Kıdem süresi yıl cinsinden (artık ay ve günler oranlı)
-    const totalYears = years + months / 12 + days / 365;
+    const r = calculateSeverance(entry, exit, gross);
+    show(r);
 
-    // Ödemeye esas gün (her tam yıl = 30 gün)
-    const totalDays = totalYears * SEVERANCE_DAYS_PER_YEAR;
-
-    // İş Kanunu: en az 1 tam yıl çalışma şart. 1 yıldan az kıdemde tazminat yok.
-    if (totalYears < 1) {
-      document.getElementById('total-days').textContent = totalDays.toFixed(0);
-      document.getElementById('daily-rate').textContent = 'TL 0,00';
-      document.getElementById('gross-severance-amount').textContent = 'TL 0,00';
-      document.getElementById('stamp-severance').textContent = '-TL 0,00';
-      document.getElementById('net-severance').textContent = 'TL 0,00';
-      if (note) {
-        note.textContent = '1 yıldan az kıdemde tazminat hakkı doğmaz (İş Kanunu).';
+    if (note) {
+      if (r.totalDays < 0) {
+        note.textContent = 'İşten çıkış tarihi, işe giriş tarihinden önce olamaz.';
+      } else if (!r.entitled) {
+        note.textContent = '1 yıldan (365 gün) az kıdemde tazminat hakkı doğmaz (İş Kanunu).';
+      } else {
+        note.textContent = `Bu tarih için geçerli kıdem tavanı: ${fmt(r.ceiling)} TL`;
       }
-      const rv = document.getElementById('result-value');
-      if (rv) rv.textContent = 'TL 0,00';
-      return;
     }
-
-    // Kıdeme esas yıllık ücret tavanla sınırlanır
-    const cappedAnnual = Math.min(gross, annualCap);
-
-    // Günlük brüt = kıdeme esas yıllık / 30
-    const dailyRate = cappedAnnual / SEVERANCE_DAYS_PER_YEAR;
-
-    // Brüt tazminat = kıdeme esas yıllık × tam yıl (+ artık gün oranı)
-    const grossAmount = cappedAnnual * totalYears;
-
-    // Damga vergisi
-    const stampTax = grossAmount * STAMP_TAX_RATE;
-
-    // Net
-    const netAmount = Math.max(0, grossAmount - stampTax);
-
-    document.getElementById('total-days').textContent = totalDays.toFixed(0);
-    document.getElementById('daily-rate').textContent = `TL ${fmt(dailyRate)}`;
-    document.getElementById('gross-severance-amount').textContent = `TL ${fmt(grossAmount)}`;
-    document.getElementById('stamp-severance').textContent = `-TL ${fmt(stampTax)}`;
-    document.getElementById('net-severance').textContent = `TL ${fmt(netAmount)}`;
-
-    // Calculator bileşenini güncelle
-    const resultValue = document.getElementById('result-value');
-    if (resultValue) resultValue.textContent = `TL ${fmt(netAmount)}`;
-  }
-
-  function resetDisplay() {
-    document.getElementById('total-days').textContent = '0';
-    document.getElementById('daily-rate').textContent = 'TL 0,00';
-    document.getElementById('gross-severance-amount').textContent = 'TL 0,00';
-    document.getElementById('stamp-severance').textContent = '-TL 0,00';
-    document.getElementById('net-severance').textContent = 'TL 0,00';
-
-    const resultValue = document.getElementById('result-value');
-    if (resultValue) resultValue.textContent = 'TL 0,00';
   }
 
   function init() {
-    const grossInput = document.getElementById('gross-severance');
-    const yearsInput = document.getElementById('years-severance');
-    const monthsInput = document.getElementById('months-severance');
-    const daysInput = document.getElementById('days-severance');
-    const exitDateInput = document.getElementById('exit-date-severance');
-
-    if (!grossInput || !yearsInput || !monthsInput || !daysInput || !exitDateInput) {
+    const ids = ['gross-severance', 'entry-date-severance', 'exit-date-severance'];
+    const inputs = ids.map((id) => document.getElementById(id));
+    if (inputs.some((el) => !el)) {
       console.error('Kidem tazminati: input elemanlari bulunamadi');
       return;
     }
-
-    grossInput.addEventListener('input', calculateSeverance);
-    yearsInput.addEventListener('input', calculateSeverance);
-    monthsInput.addEventListener('input', calculateSeverance);
-    daysInput.addEventListener('input', calculateSeverance);
-    exitDateInput.addEventListener('input', calculateSeverance);
-    exitDateInput.addEventListener('change', calculateSeverance);
-
-    // Initial calculation
-    calculateSeverance();
+    inputs.forEach((el) => {
+      el.addEventListener('input', calculate);
+      el.addEventListener('change', calculate);
+    });
+    calculate();
   }
 
   if (document.readyState === 'loading') {

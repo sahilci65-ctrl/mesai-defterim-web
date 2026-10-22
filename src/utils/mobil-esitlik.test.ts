@@ -16,6 +16,7 @@ import {
   calculateNoticeSeverance,
   calculateOvertime,
   calculatePublicHolidayWork,
+  calculateSeverance,
 } from './calc-web';
 
 /** Referans senaryo: net 30.000 ₺ */
@@ -79,4 +80,27 @@ describe('web = mobil — brütten nete', () => {
   it('45.000 → 36.632,97', () => {
     expect(calculateNetFromGross(45000).net).toBe(36632.97);
   });
+});
+
+/**
+ * Mobil kidemTazminati(giriş, çıkış, maaş) çıktıları — mobil kodla üretildi.
+ * İki dönem tavanı, tavan altı/üstü, 1 yıl sınırı ve artık yıllı süreler.
+ */
+describe('web = mobil — kıdem tazminatı', () => {
+  const vakalar: [string, string, number, number, number, number, number][] = [
+    // [giriş, çıkış, maaş, gün, tavan, brüt, net]
+    ['2021-07-15', '2026-07-15', 30000, 1826, 73729.84, 150082.19, 148943.07],
+    ['2021-01-01', '2026-03-01', 50000, 1885, 64948.77, 258219.18, 256259.29],
+    ['2016-03-10', '2026-09-20', 100000, 3846, 73729.84, 776890.31, 770993.72],
+    ['2022-05-01', '2026-05-01', 100000, 1461, 64948.77, 259973.02, 257999.83],
+    ['2025-11-01', '2026-10-31', 40000, 364, 73729.84, 0, 0],
+    ['2025-10-31', '2026-10-31', 40000, 365, 73729.84, 40000, 39696.4],
+    ['2023-02-14', '2026-08-27', 45678.9, 1290, 73729.84, 161440.5, 160215.16],
+  ];
+  for (const [giris, cikis, maas, gun, tavan, brut, net] of vakalar) {
+    it(`${giris} → ${cikis}, ${maas} ₺`, () => {
+      const r = calculateSeverance(giris, cikis, maas);
+      expect([r.totalDays, r.ceiling, r.grossAmount, r.netAmount]).toEqual([gun, tavan, brut, net]);
+    });
+  }
 });
