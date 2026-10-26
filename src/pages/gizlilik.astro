@@ -2,13 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 
-const lastUpdated = "22 Temmuz 2026";
+const lastUpdated = "26 Ekim 2026";
 const contactEmail = "sahilci65@gmail.com";
 ---
 
 <BaseLayout
   title="Gizlilik Politikası — Mesai Defterim"
-  description="Mesai Defterim uygulaması ve web sitesi gizlilik politikası. Verileriniz yalnızca cihazınızda tutulur, sunucuya gönderilmez. KVKK uyumlu."
+  description="Mesai Defterim uygulaması ve web sitesi gizlilik politikası. Verileriniz cihazınızda ve kendi Google hesabınızdaki şifreli yedekte tutulur, sunucumuza gönderilmez. KVKK uyumlu."
 >
   <section class="policy">
     <div class="policy-container">
@@ -21,7 +21,9 @@ const contactEmail = "sahilci65@gmail.com";
         <p>
           <strong>Kısaca:</strong> Mesai Defterim'de üyelik yoktur, kişisel
           veriniz toplanmaz. Uygulamaya girdiğiniz mesai, maaş ve kayıtlar
-          yalnızca kendi cihazınızda saklanır; hiçbir sunucuya gönderilmez.
+          kendi cihazınızda (Android yedeklemesi açıksa ayrıca kendi Google
+          hesabınızdaki şifreli cihaz yedeğinde) saklanır; sunucumuza
+          gönderilmez. Uygulama tamamen ücretsizdir, satın alma yoktur.
           Web sitesindeki hesaplayıcılar da tamamen tarayıcınızda çalışır.
         </p>
       </div>
@@ -39,18 +41,35 @@ const contactEmail = "sahilci65@gmail.com";
       <p>
         Mesai Defterim uygulamasına girdiğiniz tüm bilgiler — çalışma
         saatleri, mesai kayıtları, maaş ve ücret bilgileri, notlar ve diğer
-        kayıtlar — yalnızca kendi cihazınızdaki yerel veritabanında (SQLite)
+        kayıtlar — kendi cihazınızdaki yerel veritabanında (SQLite)
         saklanır. Bu veriler:
       </p>
       <ul>
         <li>Bizim veya üçüncü tarafların sunucularına <strong>gönderilmez</strong>,</li>
         <li>Tarafımızca <strong>görüntülenemez, toplanmaz veya saklanmaz</strong>,</li>
-        <li>Yalnızca sizin erişiminizde, sizin cihazınızda kalır.</li>
+        <li>Yalnızca sizin erişiminizde kalır.</li>
       </ul>
       <p>
-        Uygulamayı cihazınızdan kaldırdığınızda bu veriler de cihazınızdan
-        silinir. Verilerinizi yedeklemek veya aktarmak tamamen sizin
-        kontrolünüzdedir.
+        <strong>Android otomatik yedeklemesi:</strong> Cihazınızda Android
+        yedeklemesi açıksa Android, bu verilerin (ayarlar, çalışma günleri,
+        bordro ve ücret kayıtları) bir kopyasını <strong>kendi Google
+        hesabınızdaki</strong> şifreli cihaz yedeğine alır; uygulamayı yeniden
+        kurduğunuzda veya yeni telefona geçtiğinizde verileriniz geri gelir.
+        Bu yedek Google'ın Android yedekleme hizmetince tutulur; bize
+        gönderilmez ve biz erişemeyiz. Reklam ve uygulama içi sayaçlar gibi
+        cihaza özel teknik bilgiler bu yedeğe dahil edilmez.
+      </p>
+      <p>
+        Uygulama ayrıca isteğe bağlı bir "Yedek Al" özelliği sunar: verileriniz
+        bir dosya olarak oluşturulur ve bu dosyayı nereye göndereceğinize
+        yalnızca siz karar verirsiniz.
+      </p>
+      <p>
+        Verilerinizi tamamen silmek için uygulamayı kaldırın ve Google
+        hesabınızdaki yedeği de silin (telefonunuzda: Ayarlar → Google →
+        Yedekleme; ya da Google Drive → Yedekler). Android yedeklemesi
+        kapalıysa veriler yalnızca cihazınızda kalır ve uygulama kaldırılınca
+        silinir.
       </p>
 
       <h2>2. Üyelik yok, kişisel veri toplanmıyor</h2>
@@ -74,11 +93,12 @@ const contactEmail = "sahilci65@gmail.com";
         izleyen bir analitik aracı barındırmaz.
       </p>
 
-      <h2>4. Üçüncü taraf hizmetler (reklam ve satın alma)</h2>
+      <h2>4. Üçüncü taraf hizmetler (reklam ve Google Play)</h2>
       <p>
-        Uygulamanın ücretsiz sürümü, gelir elde etmek amacıyla aşağıdaki
-        Google hizmetlerini kullanabilir. Bu hizmetler, kendi gizlilik
-        politikaları kapsamında ve kendi sorumluluklarında veri işler:
+        Mesai Defterim tamamen ücretsizdir; satın alma veya abonelik yoktur ve
+        tek gelir kaynağı reklamdır. Uygulama aşağıdaki Google hizmetlerini
+        kullanır. Bu hizmetler, kendi gizlilik politikaları kapsamında ve
+        kendi sorumluluklarında veri işler:
       </p>
       <ul>
         <li>
@@ -87,16 +107,21 @@ const contactEmail = "sahilci65@gmail.com";
           ID)</strong> ve genel cihaz/kullanım bilgileri gibi verileri Google
           tarafından işlenebilir. Reklam kişiselleştirmesini cihazınızın
           ayarlarından sınırlayabilir veya reklam kimliğini sıfırlayabilirsiniz.
-          Ayrıntılar için
+          Uygulamaya girdiğiniz maaş, mesai ve bordro bilgileri reklam için
+          kullanılmaz ve AdMob'a gönderilmez. Ayrıntılar için
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Gizlilik Politikası</a>'na
           bakabilirsiniz.
         </li>
         <li>
-          <strong>Google Play Faturalandırma (satın alma):</strong> Reklamsız
-          sürüm veya uygulama içi satın alma yapmanız durumunda ödeme işlemi
-          Google Play tarafından yürütülür. Ödeme ve fatura bilgileriniz Google
-          tarafından işlenir; kart bilgileriniz bizimle paylaşılmaz ve
-          tarafımızca saklanmaz.
+          <strong>Google Play uygulama içi puanlama:</strong> Uygulamayı bir
+          süre kullandıktan sonra Google Play'in kendi puan verme penceresi
+          gösterilebilir. Verdiğiniz puan ve yorum doğrudan Google Play'e
+          gider; hangi puanı verdiğinizi göremeyiz.
+        </li>
+        <li>
+          <strong>Google Play uygulama içi güncelleme:</strong> Yeni sürüm
+          olduğunda Google Play üzerinden güncelleme önerilebilir; indirme ve
+          kurulumu Google Play yürütür.
         </li>
       </ul>
       <p>
@@ -123,8 +148,9 @@ const contactEmail = "sahilci65@gmail.com";
         Uygulama ve web sitesi kişisel veri toplamadığı ve sunucuda veri
         saklamadığı için, tarafımızda size ait işlenen bir kişisel veri
         bulunmamaktadır. Cihazınızdaki kayıtların tamamı sizin
-        kontrolünüzdedir ve dilediğiniz zaman uygulama içinden veya uygulamayı
-        kaldırarak silebilirsiniz. KVKK'nın 11. maddesi kapsamındaki
+        kontrolünüzdedir; dilediğiniz zaman uygulama içinden silebilir veya
+        uygulamayı kaldırıp Google hesabınızdaki Android yedeğini de silerek
+        tamamen ortadan kaldırabilirsiniz (bkz. 1. bölüm). KVKK'nın 11. maddesi kapsamındaki
         haklarınıza ilişkin her türlü soru için bizimle iletişime
         geçebilirsiniz.
       </p>
