@@ -194,6 +194,16 @@ export function calculateNoticeSeverance(
   };
 }
 
+/**
+ * Saat (ondalik) → bir sonraki yarim saate yukari yuvarlanmis saat.
+ * 2,2 → 2,5; 2,5 → 2,5; 2,6 → 3; 0 → 0. Mobil calc.ts ile ayni kural.
+ */
+export function yarimSaateYuvarla(saat: number): number {
+  const dakika = Math.round(saat * 60);
+  if (dakika <= 0) return 0;
+  return (Math.ceil(dakika / 30) * 30) / 60;
+}
+
 // Fazla mesai ücreti hesapla
 export function calculateOvertime(
   monthlyGrossIncome: number,
@@ -210,8 +220,12 @@ export function calculateOvertime(
   const hourlyExact = monthlyGrossIncome / WORKING_DAYS_PER_MONTH;
   const hourlyRate = Math.round(hourlyExact * 100) / 100;
 
+  // Fazla Calisma Yonetmeligi m.5/2: yarim saatten az sureler yarim saat,
+  // yarim saati asan sureler bir saat sayilir (mobil: calc.ts yarimSaateYuvarla).
+  const hesapSaat = yarimSaateYuvarla(overtimeHours);
+
   // Fazla mesai ücreti = saatlik × saat × 1.5
-  const grossAmount = Math.round(hourlyExact * overtimeHours * OVERTIME_MULTIPLIER * 100) / 100;
+  const grossAmount = Math.round(hourlyExact * hesapSaat * OVERTIME_MULTIPLIER * 100) / 100;
 
   // Damga vergisi
   const stampTax = Math.round(grossAmount * STAMP_TAX_RATE * 100) / 100;

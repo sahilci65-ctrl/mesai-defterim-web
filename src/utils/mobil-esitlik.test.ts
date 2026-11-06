@@ -36,6 +36,12 @@ describe('web = mobil — net 30.000 ₺ senaryosu', () => {
     expect(calculateOvertime(BRUT, 10).grossAmount).toBe(2381.46);
   });
 
+  it('yarım saat kuralı (Yönetmelik m.5/2): 2s 10dk → 2,5 saat sayılır', () => {
+    // Mobil: ayOzetiHesapla(brüt 35.721,94, 2s10dk).fazlaMesaiTutar = 595,37
+    expect(calculateOvertime(BRUT, 130 / 60).grossAmount).toBe(595.37);
+    expect(calculateOvertime(BRUT, 2.5).grossAmount).toBe(595.37);
+  });
+
   it('1 gün resmi tatil ilavesi = brüt / 30', () => {
     expect(calculatePublicHolidayWork(BRUT, 1).grossAmount).toBe(1190.73);
   });
