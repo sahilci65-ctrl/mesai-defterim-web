@@ -78,8 +78,10 @@ export function calculateGrossFromNet(
   net: number;
 } {
   // Ikili arama — MOBIL ile birebir ayni (calc.ts nettenBrute):
-  // 60 adim, erken cikis YOK, sonuc alt/ust ortasi. Erken cikis veya farkli
-  // adim sayisi kurusluk ayrisma yaratiyordu.
+  // 60 adim, erken cikis YOK. Erken cikis veya farkli adim sayisi kurusluk
+  // ayrisma yaratiyordu. Sonuc: neti TAM veren en kucuk kuruslu brut
+  // (mobil v1.7.1; eskiden en yakina yuvarlaniyor, yarisinda net 1 kurus
+  // eksik cikiyordu: 30.000 -> 29.999,99).
   let low = netIncome;
   let high = netIncome * 2.5;
 
@@ -92,7 +94,11 @@ export function calculateGrossFromNet(
     }
   }
 
-  return calculateNetFromGross(Math.round(((low + high) / 2) * 100) / 100);
+  let gross = Math.ceil(high * 100 - 1e-6) / 100;
+  while (calculateNetFromGross(gross).net < netIncome) {
+    gross = round2(gross + 0.01);
+  }
+  return calculateNetFromGross(gross);
 }
 
 // İki 'YYYY-MM-DD' tarihi arasındaki takvim günü (saat dilimi etkisiz) — mobil gunFarki

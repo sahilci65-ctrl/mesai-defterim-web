@@ -21,7 +21,7 @@ import {
 
 /** Referans senaryo: net 30.000 ₺ */
 const NET = 30000;
-const BRUT = 35721.94;
+const BRUT = 35721.95; // mobil v1.7.1: neti TAM 30.000 veren en küçük kuruş
 
 describe('web = mobil — net 30.000 ₺ senaryosu', () => {
   it('net → brüt çevrimi', () => {
@@ -48,7 +48,7 @@ describe('web = mobil — net 30.000 ₺ senaryosu', () => {
 
   // Mobil "yaklaşık net" satırı: bruttenNete(maaş + ilave). Web yalnız ilaveyi
   // gösterdiği için aynı modelle bruttenNete(maaş + ilave) − bruttenNete(maaş).
-  // Mobil değerleri: bruttenNete(BRUT) = 29.999,99; +FM = 31.702,52; +UBGT = 30.851,26
+  // Mobil değerleri: bruttenNete(BRUT) = 30.000; +FM = 31.702,53; +UBGT = 30.851,27
   it('fazla mesai ilavesinin yaklaşık neti (tam kesintilerle)', () => {
     expect(calculateExtraPayNet(BRUT, 2381.46)).toBe(1702.53);
   });

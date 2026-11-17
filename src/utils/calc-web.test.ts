@@ -205,7 +205,7 @@ describe('İhbar Tazminatı', () => {
 
 describe('Ek ödemenin yaklaşık neti (tam kesintilerle)', () => {
   it('ek ödeme yoksa 0', () => {
-    expect(calculateExtraPayNet(35721.94, 0)).toBe(0);
+    expect(calculateExtraPayNet(35721.95, 0)).toBe(0);
   });
 
   it('net, brütten küçüktür (SGK + gelir vergisi + damga)', () => {
